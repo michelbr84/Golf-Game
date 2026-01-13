@@ -5,5 +5,12 @@
         "unlocked_balls": [
             "255,255,255"
         ]
+    },
+    "Player": {
+        "coins": 0,
+        "best_score": 999,
+        "unlocked_balls": [
+            "255,255,255"
+        ]
     }
 }

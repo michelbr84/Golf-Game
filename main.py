@@ -860,19 +860,18 @@ def redrawWindow(ball, line, shoot=False, update=True):
     if update:
         # Draw HUD (Moved to end for Z-order)
         if profiles.current_user:
-            # Coin HUD - Display TOTAL coins (Saved + Collected this session)
-            # Or just Collected? User asked to see coins.
-            # Showing Total seems better.
+            # Coin HUD - Display TOTAL coins
+            # Moved to x=130 to avoid overlap with Par/Hit cards
             total_coins = profiles.get_coins() + (coins - start_coins)
             coin_text = Fonts.HUD_MEDIUM.render(f"Coins: {total_coins}", True, Colors.ACCENT_GOLD)
-            c_rect = coin_text.get_rect(topleft=(20, 20))
+            c_rect = coin_text.get_rect(topleft=(130, 20))
             bg_rect = c_rect.inflate(20, 10)
             draw_rounded_rect(win, (0, 0, 0, 100), bg_rect, 10)
-            win.blit(coin_text, (20, 20))
+            win.blit(coin_text, (130, 20))
             
-            # User HUD
+            # User HUD (x=130, y=50)
             user_text = Fonts.UI_SMALL.render(f"Player: {profiles.current_user}", True, Colors.TEXT_SECONDARY)
-            win.blit(user_text, (20, 50))
+            win.blit(user_text, (130, 50))
 
         powerBar()
 
@@ -1158,7 +1157,8 @@ while True:
                     angle = 0
                     line = (ballStationary[0] + 30, ballStationary[1])
 
-    redrawWindow(ballStationary, line)
+    if pygame.get_init():
+        redrawWindow(ballStationary, line)
     hitting = False
 
     while put and not shoot:  # If we are putting
