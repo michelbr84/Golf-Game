@@ -2,6 +2,8 @@
 
 Um jogo de golf 2D completo desenvolvido em Python com Pygame, apresentando física realista, power-ups, sistema de loja e sistema de áudio completo!
 
+![Golf-Game](img/game.png)
+
 ![Python](https://img.shields.io/badge/Python-3.6+-blue.svg)
 ![Pygame](https://img.shields.io/badge/Pygame-2.0+-green.svg)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
