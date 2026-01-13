@@ -218,8 +218,11 @@ def drawShop(pos=None, click=False):
              pass
              
         s = obj.getSurf()
-        surf.blit(s, ((200 * count) - 150, 50 + (xVal * 160)))
-        surfaces.append([(200 * count) - 150, 50 + (xVal * 160), 160, 125])
+        # FIX: Old Formula was (200 * count) - 150. Count starts at 0, so -150 is offscreen.
+        # NEW: (200 * count) + 50 starts at 50 (Visible).
+        x_pos = (200 * count) + 50
+        surf.blit(s, (x_pos, 50 + (xVal * 160)))
+        surfaces.append([x_pos, 50 + (xVal * 160), 160, 125])
         ballObjects.append(obj)
         
         count += 1

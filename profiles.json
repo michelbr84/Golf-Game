@@ -1,12 +1,12 @@
 {
     "Michel": {
-        "coins": 0,
+        "coins": 1,
         "best_score": 999,
         "unlocked_balls": [
             "255,255,255",
             "0,0,255"
         ],
-        "equipped_ball": "0,0,255"
+        "equipped_ball": "255,255,255"
     },
     "Player": {
         "coins": 0,
@@ -14,5 +14,13 @@
         "unlocked_balls": [
             "255,255,255"
         ]
+    },
+    "test": {
+        "coins": 1,
+        "best_score": 999,
+        "unlocked_balls": [
+            "255,255,255"
+        ],
+        "equipped_ball": "255,255,255"
     }
 }
