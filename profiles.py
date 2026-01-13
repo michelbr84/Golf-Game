@@ -51,6 +51,11 @@ def add_coins(amount):
         profile_data[current_user]["coins"] += amount
         save_data()
 
+def set_coins(amount):
+    if current_user and current_user in profile_data:
+        profile_data[current_user]["coins"] = amount
+        save_data()
+
 def get_best_score():
     if current_user and current_user in profile_data:
         return profile_data[current_user]["best_score"]

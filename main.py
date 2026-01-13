@@ -387,13 +387,19 @@ def endScreen(): # Display this screen when the user completes trhe course
             if sheet.getScore() < int(oldscore):
                 is_new_best = True
                 file.write('score ' + str(sheet.getScore()) + '\n')
+                profiles.update_best_score(sheet.getScore())
             else:
                 file.write('score ' + str(oldscore) + '\n')
         else:
             is_new_best = True
             file.write('score ' + str(sheet.getScore()) + '\n')
+            profiles.update_best_score(sheet.getScore())
         
-        file.write('coins ' + str(int(oldcoins) + coins) + '\n')
+        # Save coins (Syncing profiles and scores.txt)
+        # 'coins' is the total current wealth.
+        file.write('coins ' + str(coins) + '\n')
+        profiles.set_coins(coins)
+        
         file.close()
     except Exception as e:
         print(f"Error saving scores: {e}")
@@ -860,10 +866,9 @@ def redrawWindow(ball, line, shoot=False, update=True):
     if update:
         # Draw HUD (Moved to end for Z-order)
         if profiles.current_user:
-            # Coin HUD - Display TOTAL coins
-            # Moved to x=130 to avoid overlap with Par/Hit cards
-            total_coins = profiles.get_coins() + (coins - start_coins)
-            coin_text = Fonts.HUD_MEDIUM.render(f"Coins: {total_coins}", True, Colors.ACCENT_GOLD)
+            # Coin HUD - Display TOTAL coins (Global Variable)
+            # 'coins' variable tracks total user wealth (loaded at start + collected)
+            coin_text = Fonts.HUD_MEDIUM.render(f"Coins: {coins}", True, Colors.ACCENT_GOLD)
             c_rect = coin_text.get_rect(topleft=(130, 20))
             bg_rect = c_rect.inflate(20, 10)
             draw_rounded_rect(win, (0, 0, 0, 100), bg_rect, 10)
