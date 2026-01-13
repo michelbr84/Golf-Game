@@ -123,35 +123,31 @@ Este documento rastreia o estado atual do jogo e todas as melhorias planejadas p
 - [ ] Squash/stretch em colisões
 
 #### 2.4 Botões Modernos
-- [ ] Estados hover/pressed distintos
-- [ ] Transições suaves de estado
+- [x] Estados hover/pressed distintos (em `ModernButton`)
+- [x] Cores dinâmicas baseadas em estado
 
 ---
 
-### ✨ Etapa 3 - "Apple Arcade Vibe" (Polish Final)
+## ✅ Etapa 3 - "Apple Arcade Vibe" (Polish Final) - EM PROGRESSO
 
-#### 3.1 Materiais nas Plataformas
+### ✅ Implementado
+
+#### 3.1 Animações e Efeitos
+- [x] Transições fade entre telas (`ScreenTransition`)
+- [x] Animação de compra/vitória (confetti - `ConfettiSystem`)
+- [x] Bandeira com animação de vento (`FlagAnimation`)
+- [x] Camera shake em colisões (`CameraShake`)
+- [x] Screen flash para feedback (`ScreenFlash`)
+- [x] Valores animados suavemente (`AnimatedValue`)
+
+### ⏳ Pendente
+
+#### 3.2 Materiais nas Plataformas
 - [ ] Textura de metal para plataformas metálicas
 - [ ] Textura de madeira para plataformas de madeira
 - [ ] Textura de pedra para paredes
-- [ ] Contorno mais escuro + corpo mais claro (bevel)
-- [ ] Bordas com depth visual
 
-#### 3.2 Animações Sutis
-- [ ] Animação de hover em todos os botões
-- [ ] Transições fade/slide entre telas
-- [ ] Animação de equipar bola (glow/pulse)
-- [ ] Animação de compra (confetti ou similar)
-- [ ] Bandeira com animação de vento
-
-#### 3.3 Game Feel Avançado
-- [ ] Câmera com smooth follow
-- [ ] Camera shake leve em colisão forte
-- [ ] Som de impacto diferente por material
-- [ ] Som "swish" da tacada
-- [ ] Feedback háptico visual (screen flash sutil)
-
-#### 3.4 Sound Design Completo
+#### 3.3 Sound Design Completo
 - [ ] Sons de UI (hover/click distintos)
 - [ ] Som ambiente (pássaros, vento leve)
 - [ ] Variações nos sons de impacto

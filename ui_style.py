@@ -717,6 +717,267 @@ class ParallaxBackground:
 
 
 # ============================================================================
+# ETAPA 3 - SCREEN TRANSITIONS
+# ============================================================================
+
+class ScreenTransition:
+    """Handles fade in/out transitions between screens"""
+    
+    def __init__(self, width, height):
+        self.width = width
+        self.height = height
+        self.alpha = 0
+        self.target_alpha = 0
+        self.speed = 10
+        self.active = False
+        self.callback = None
+    
+    def fade_in(self, speed=10, callback=None):
+        """Start fade from black to transparent"""
+        self.alpha = 255
+        self.target_alpha = 0
+        self.speed = speed
+        self.active = True
+        self.callback = callback
+    
+    def fade_out(self, speed=10, callback=None):
+        """Start fade from transparent to black"""
+        self.alpha = 0
+        self.target_alpha = 255
+        self.speed = speed
+        self.active = True
+        self.callback = callback
+    
+    def update(self):
+        """Update transition state"""
+        if not self.active:
+            return False
+        
+        if self.alpha < self.target_alpha:
+            self.alpha = min(self.alpha + self.speed, self.target_alpha)
+        elif self.alpha > self.target_alpha:
+            self.alpha = max(self.alpha - self.speed, self.target_alpha)
+        
+        if self.alpha == self.target_alpha:
+            self.active = False
+            if self.callback:
+                self.callback()
+            return True  # Transition complete
+        return False
+    
+    def draw(self, surface):
+        """Draw the transition overlay"""
+        if self.alpha > 0:
+            overlay = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
+            overlay.fill((0, 0, 0, self.alpha))
+            surface.blit(overlay, (0, 0))
+    
+    def is_active(self):
+        return self.active
+
+
+# ============================================================================
+# ETAPA 3 - CAMERA SHAKE
+# ============================================================================
+
+class CameraShake:
+    """Creates screen shake effect for impacts"""
+    
+    def __init__(self):
+        self.offset_x = 0
+        self.offset_y = 0
+        self.intensity = 0
+        self.duration = 0
+        self.decay = 0.9
+    
+    def shake(self, intensity=5, duration=10):
+        """Start a shake effect"""
+        self.intensity = intensity
+        self.duration = duration
+    
+    def update(self):
+        """Update shake effect"""
+        import random
+        if self.duration > 0:
+            self.offset_x = random.randint(-int(self.intensity), int(self.intensity))
+            self.offset_y = random.randint(-int(self.intensity), int(self.intensity))
+            self.intensity *= self.decay
+            self.duration -= 1
+        else:
+            self.offset_x = 0
+            self.offset_y = 0
+            self.intensity = 0
+    
+    def get_offset(self):
+        """Get current shake offset for rendering"""
+        return (self.offset_x, self.offset_y)
+
+
+# ============================================================================
+# ETAPA 3 - SCREEN FLASH
+# ============================================================================
+
+class ScreenFlash:
+    """Creates a brief flash effect for feedback"""
+    
+    def __init__(self, width, height):
+        self.width = width
+        self.height = height
+        self.alpha = 0
+        self.color = (255, 255, 255)
+        self.decay = 25
+    
+    def flash(self, color=(255, 255, 255), intensity=80):
+        """Trigger a flash"""
+        self.color = color
+        self.alpha = intensity
+    
+    def update(self):
+        """Update flash effect"""
+        if self.alpha > 0:
+            self.alpha = max(0, self.alpha - self.decay)
+    
+    def draw(self, surface):
+        """Draw the flash overlay"""
+        if self.alpha > 0:
+            overlay = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
+            overlay.fill((*self.color, self.alpha))
+            surface.blit(overlay, (0, 0))
+
+
+# ============================================================================
+# ETAPA 3 - ANIMATED VALUE
+# ============================================================================
+
+class AnimatedValue:
+    """Smoothly animates between values (for UI elements)"""
+    
+    def __init__(self, initial_value=0, speed=0.1):
+        self.current = initial_value
+        self.target = initial_value
+        self.speed = speed
+    
+    def set_target(self, value):
+        """Set the target value to animate to"""
+        self.target = value
+    
+    def update(self):
+        """Update the current value towards target"""
+        diff = self.target - self.current
+        self.current += diff * self.speed
+        
+        # Snap to target if close enough
+        if abs(diff) < 0.01:
+            self.current = self.target
+    
+    def get(self):
+        """Get current animated value"""
+        return self.current
+    
+    def is_animating(self):
+        """Check if still animating"""
+        return abs(self.target - self.current) > 0.01
+
+
+# ============================================================================
+# ETAPA 3 - FLAG ANIMATION
+# ============================================================================
+
+class FlagAnimation:
+    """Animates flag with wind effect"""
+    
+    def __init__(self):
+        self.time = 0
+        self.wave_speed = 0.15
+        self.wave_amount = 3
+    
+    def update(self):
+        """Update animation timer"""
+        self.time += self.wave_speed
+    
+    def get_offset(self):
+        """Get current wave offset for flag rendering"""
+        offset = math.sin(self.time) * self.wave_amount
+        return offset
+
+
+# ============================================================================
+# ETAPA 3 - CONFETTI EFFECT
+# ============================================================================
+
+class ConfettiSystem:
+    """Creates confetti particles for celebrations"""
+    
+    def __init__(self, max_particles=100):
+        self.particles = []
+        self.max_particles = max_particles
+        self.colors = [
+            (255, 100, 100),  # Red
+            (100, 255, 100),  # Green
+            (100, 100, 255),  # Blue
+            (255, 255, 100),  # Yellow
+            (255, 100, 255),  # Pink
+            (100, 255, 255),  # Cyan
+        ]
+    
+    def emit(self, x, y, count=30):
+        """Emit confetti from a position"""
+        import random
+        for _ in range(count):
+            if len(self.particles) >= self.max_particles:
+                break
+            
+            vx = random.uniform(-4, 4)
+            vy = random.uniform(-8, -3)
+            color = random.choice(self.colors)
+            size = random.randint(4, 8)
+            rotation = random.uniform(0, 6.28)
+            rot_speed = random.uniform(-0.2, 0.2)
+            
+            self.particles.append({
+                'x': x, 'y': y,
+                'vx': vx, 'vy': vy,
+                'color': color,
+                'size': size,
+                'rotation': rotation,
+                'rot_speed': rot_speed,
+                'lifetime': random.randint(60, 120)
+            })
+    
+    def update(self):
+        """Update all confetti particles"""
+        for p in self.particles:
+            p['x'] += p['vx']
+            p['y'] += p['vy']
+            p['vy'] += 0.12  # Gravity
+            p['vx'] *= 0.99  # Air resistance
+            p['rotation'] += p['rot_speed']
+            p['lifetime'] -= 1
+        
+        # Remove dead particles
+        self.particles = [p for p in self.particles if p['lifetime'] > 0]
+    
+    def draw(self, surface):
+        """Draw confetti"""
+        for p in self.particles:
+            alpha = min(255, p['lifetime'] * 4)
+            s = p['size']
+            
+            # Create rotated rectangle
+            confetti_surf = pygame.Surface((s * 2, s), pygame.SRCALPHA)
+            pygame.draw.rect(confetti_surf, (*p['color'], alpha), (0, 0, s * 2, s))
+            
+            # Rotate
+            rotated = pygame.transform.rotate(confetti_surf, math.degrees(p['rotation']))
+            rect = rotated.get_rect(center=(int(p['x']), int(p['y'])))
+            surface.blit(rotated, rect)
+    
+    def clear(self):
+        """Clear all particles"""
+        self.particles = []
+
+
+# ============================================================================
 # INITIALIZATION
 # ============================================================================
 
@@ -733,6 +994,9 @@ __all__ = [
     'draw_shadow', 'draw_ball_shadow', 'draw_ball_premium',
     'GlassCard', 'HUDCard', 'ModernButton', 'PremiumBackground',
     'Particle', 'ParticleSystem', 'BallTrail', 'ParallaxLayer', 'ParallaxBackground',
+    'ScreenTransition', 'CameraShake', 'ScreenFlash', 'AnimatedValue', 
+    'FlagAnimation', 'ConfettiSystem',
     'init_ui'
 ]
+
 

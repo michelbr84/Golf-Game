@@ -43,7 +43,8 @@ import sys
 import ui_style
 from ui_style import (Colors, Fonts, HUDCard, draw_ball_shadow, draw_ball_premium, 
                       PremiumBackground, draw_shadow, draw_rounded_rect,
-                      ParticleSystem, BallTrail, ParallaxBackground as ParallaxBG)
+                      ParticleSystem, BallTrail, ParallaxBackground as ParallaxBG,
+                      ScreenTransition, CameraShake, ScreenFlash, FlagAnimation, ConfettiSystem)
 
 # INITIALIZATION
 pygame.init()
@@ -64,6 +65,13 @@ premium_bg = PremiumBackground(winwidth, winheight)
 particle_system = ParticleSystem(max_particles=150)
 ball_trail = BallTrail(max_length=15)
 parallax_bg = ParallaxBG(winwidth, winheight)
+
+# ETAPA 3 - Screen effects and animations
+screen_transition = ScreenTransition(winwidth, winheight)
+camera_shake = CameraShake()
+screen_flash = ScreenFlash(winwidth, winheight)
+flag_anim = FlagAnimation()
+confetti = ConfettiSystem(max_particles=80)
 
 # LOAD IMAGES
 icon = pygame.image.load(os.path.join('img', 'icon.ico'))
@@ -503,6 +511,10 @@ def showScore():  # Display the score from class scoreSheet
 
 
 def holeInOne():  # If player gets a hole in one display special mesage to screen
+    # ETAPA 3 - Celebration effects!
+    confetti.emit(winwidth // 2, winheight // 2, count=50)
+    screen_flash.flash((255, 215, 0), intensity=100)  # Gold flash
+    
     # Create text with shadow for readability
     message = 'Hole in One!'
     
@@ -598,12 +610,17 @@ def redrawWindow(ball, line, shoot=False, update=True):
             for x in range(i[2] // 64):
                 win.blit(bottom, (i[0] + (64 * x), i[1]))
         elif i[4] == 'flag':
+            # ETAPA 3 - Animated flag with wind effect
+            flag_anim.update()
+            wave_offset = flag_anim.get_offset()
+            
             # Draw flag shadow
             shadow_surf = pygame.Surface((20, 8), pygame.SRCALPHA)
             pygame.draw.ellipse(shadow_surf, (0, 0, 0, 40), (0, 0, 20, 8))
             win.blit(shadow_surf, (i[0] - 8, i[1] + i[3] + 2))
             
-            win.blit(flag, (i[0], i[1]))
+            # Draw flag with wave offset
+            win.blit(flag, (i[0] + wave_offset, i[1]))
             pygame.draw.circle(win, (0, 0, 0), (i[0] + 2, i[1] + i[3]), 6)
             flagx = i[0]
         elif i[4] == 'floor':
@@ -713,6 +730,29 @@ def redrawWindow(ball, line, shoot=False, update=True):
     draw_rounded_rect(hint_bg, (0, 0, 0, 25), (0, 0, controls_text.get_width() + 16, controls_text.get_height() + 8), 6)
     win.blit(hint_bg, (12, winheight - 28))
     win.blit(controls_text, (20, winheight - 24))
+    
+    # ========================================
+    # ETAPA 3 - CONFETTI (for celebrations)
+    # ========================================
+    confetti.update()
+    confetti.draw(win)
+    
+    # ========================================
+    # ETAPA 3 - CAMERA SHAKE
+    # ========================================
+    camera_shake.update()
+    
+    # ========================================
+    # ETAPA 3 - SCREEN FLASH
+    # ========================================
+    screen_flash.update()
+    screen_flash.draw(win)
+    
+    # ========================================
+    # ETAPA 3 - SCREEN TRANSITION
+    # ========================================
+    screen_transition.update()
+    screen_transition.draw(win)
 
     if update:
         powerBar()
