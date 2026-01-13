@@ -1,7 +1,7 @@
 import pygame
 import os
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import messagebox, simpledialog
 import sys
 import ui_style
 from ui_style import Colors, Fonts, draw_rounded_rect, draw_shadow, create_gradient_surface, create_vignette
@@ -28,6 +28,7 @@ font_small = Fonts.UI_SMALL
 
 buttons = [[1080/2 - course1.get_width()/2, 260, course1.get_width(), course1.get_height(), 'Grassy Land']]
 shopButton = []
+seedButton = []
 ballObjects = []
 surfaces = []
 
@@ -260,7 +261,7 @@ def getBallColor():
 
 
 def mainScreen(hover=False):
-    global shopButton
+    global shopButton, seedButton
     surf = pygame.Surface((1080, 600))
     w = title.get_width()
     h = title.get_height()
@@ -282,6 +283,16 @@ def mainScreen(hover=False):
     shop_text = font_small.render('SHOP', True, (255, 255, 255))
     surf.blit(shop_text, (970, 14))
     shopButton = pygame.Rect(925, 8, 140, 36)
+    
+    # SEED MODE Button (top left)
+    # Using a modern pill button
+    seed_btn_color = Colors.ACCENT_GREEN
+    draw_shadow(surf, (15, 8, 140, 36), 18, (2, 2), 2)
+    draw_rounded_rect(surf, seed_btn_color, (15, 8, 140, 36), 18)
+    seed_text = font_small.render('SEED MODE', True, (255, 255, 255))
+    text_rect = seed_text.get_rect(center=(15 + 70, 8 + 18))
+    surf.blit(seed_text, text_rect)
+    seedButton = pygame.Rect(15, 8, 140, 36)
     
     # Course Card with glass effect
     i = buttons[0]
@@ -342,6 +353,22 @@ def shopClick(pos):
         if pos[1] > i[1] and pos[1] < i[1] + i[3]:
             return True
     return False
+
+
+def seedClick(pos):
+    global seedButton
+    i = seedButton
+    if i: # Ensure it is initialized
+        if pos[0] > i[0] and pos[0] < i[0] + i[2]:
+            if pos[1] > i[1] and pos[1] < i[1] + i[3]:
+                # Ask for seed
+                root = tk.Tk()
+                root.withdraw()
+                root.attributes("-topmost", True)
+                seed = simpledialog.askstring("Seed Mode", "Enter a seed for procedural generation:\n(Leave empty to cancel)")
+                root.destroy()
+                return seed
+    return None
 
 
 def click(pos):

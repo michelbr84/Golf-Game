@@ -487,7 +487,18 @@ def endScreen(): # Display this screen when the user completes trhe course
                 startScreen.mouseOver(course != None)
             if event.type == pygame.MOUSEBUTTONDOWN:
                 pos = pygame.mouse.get_pos()
+                
+                # Check Seed Mode
+                seed = startScreen.seedClick(pos)
+                if seed:
+                    courses.set_seed(seed)
+                    level = 1
+                    setup(level)
+                    starting = False
+                    break
+                
                 if startScreen.click(pos) != None:
+                    courses.set_seed(None) # Reset to normal
                     starting = False
                     break
                 if startScreen.shopClick(pos) == True:
@@ -925,7 +936,18 @@ while starting:
             startScreen.mouseOver(course != None)
         if event.type == pygame.MOUSEBUTTONDOWN:
             pos = pygame.mouse.get_pos()
+            
+            # Check Seed Mode
+            seed = startScreen.seedClick(pos)
+            if seed:
+                courses.set_seed(seed)
+                level = 1
+                setup(level)
+                starting = False
+                break
+                
             if startScreen.click(pos) != None:
+                courses.set_seed(None) # Reset to normal
                 starting = False
                 break
             if startScreen.shopClick(pos) == True:

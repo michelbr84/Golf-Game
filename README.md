@@ -192,6 +192,7 @@ O projeto está passando por uma grande atualização visual e de UX. Consulte o
 - [x] Asset Manager centralizado para carregamento eficiente
 - [x] Sistema de Configurações (Config) para preferências
 - [x] Otimização de renderização com cache de texturas
+- [x] Modo Seed (Geração Procedural de Níveis) 🎲
 
 ### Funcionalidades Futuras
 - [ ] Sistema de tutorial
