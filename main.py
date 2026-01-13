@@ -350,65 +350,122 @@ def endScreen(): # Display this screen when the user completes trhe course
     global start, starting, level, sheet, coins
     starting = True
     start = True
-
-    # Draw all text to display on screen
-    win.blit(background, (0,0))
-    text = myFont.render('Course Completed!', 1, (64,64,64))
-    win.blit(text, (winwidth/2 - text.get_width()/2, 210))
-    text = parFont.render('Par: ' + str(sheet.getPar()), 1, (64,64,64))
-    win.blit(text, ((winwidth/2 - text.get_width()/2, 320)))
-    text = parFont.render('Strokes: ' + str(sheet.getStrokes()), 1, (64,64,64))
-    win.blit(text, ((winwidth/2 - text.get_width()/2, 280)))
-    blit = parFont.render('Press the mouse to continue...', 1, (64, 64, 64))
-    win.blit(blit, (winwidth/2 - blit.get_width()/2, 510))
-    text = parFont.render('Score: ' + str(sheet.getScore()), 1, (64,64,64))
-    win.blit(text, ((winwidth/2 - text.get_width()/2, 360)))
-    text = parFont.render('Coins Collected: ' + str(coins), 1, (64,64,64))
-    win.blit(text, ((winwidth/2 - text.get_width()/2, 470)))
-    pygame.display.update()
-
-
+    
     # RE-WRITE TEXT FILE Contaning Scores
-    oldscore = 0
+    oldscore = 'None'
     oldcoins = 0
-    file = open('scores.txt', 'r')
-    f = file.readlines()
-    for line in file:
-        l = line.split()
-        if l[0] == 'score':
-            oldscore = str(l[1]).strip()
-        if l[0] == 'coins':
-            oldcoins = str(l[1]).strip()
+    
+    # Read old scores
+    if os.path.exists('scores.txt'):
+        try:
+            file = open('scores.txt', 'r')
+            for line in file:
+                l = line.split()
+                if len(l) >= 2:
+                    if l[0] == 'score':
+                        oldscore = str(l[1]).strip()
+                    if l[0] == 'coins':
+                        oldcoins = str(l[1]).strip()
+            file.close()
+        except:
+            pass
 
-    file = open('scores.txt', 'w')
-    if str(oldscore).lower() != 'none':
-        if sheet.getScore() < int(oldscore):
-            text = myFont.render('New Best!', 1, (64, 64, 64))
-            win.blit(text, (winwidth/2 - text.get_width()/2, 130))
-            pygame.display.update()
-            file.write('score ' + str(sheet.getScore()) + '\n')
-            file.write('coins ' + str(int(oldcoins) + coins) + '\n')
+    # Save new scores
+    is_new_best = False
+    try:
+        file = open('scores.txt', 'w')
+        if str(oldscore).lower() != 'none':
+            if sheet.getScore() < int(oldscore):
+                is_new_best = True
+                file.write('score ' + str(sheet.getScore()) + '\n')
+            else:
+                file.write('score ' + str(oldscore) + '\n')
         else:
-            file.write('score ' + str(oldscore) + '\n')
-            file.write('coins ' + str(int(oldcoins) + coins) + '\n')
-    else:
-        file.write('score ' + str(sheet.getScore()) + '\n')
+            is_new_best = True
+            file.write('score ' + str(sheet.getScore()) + '\n')
+        
         file.write('coins ' + str(int(oldcoins) + coins) + '\n')
+        file.close()
+    except Exception as e:
+        print(f"Error saving scores: {e}")
 
-    co = 0
-    for line in f:
-        if co > 2:
-            file.write(line)
-        co += 1
+    # Celebration!
+    confetti.emit(winwidth//2, winheight//2, count=150)
+    if is_new_best:
+        screen_flash.flash((255, 215, 0), 150) # Gold flash for new best
 
-    file.close()
+    # Fonts
+    title_font = AssetManager.get_font('Arial', 50, bold=True)
+    info_font = AssetManager.get_font('Arial', 30, bold=False)
+    small_font = AssetManager.get_font('Arial', 20, bold=False)
 
-    # Wait
+    # Wait / Animation Loop
     loop = True
+    clock = pygame.time.Clock()
+    
     while loop:
+        clock.tick(60)
+        
+        # 1. Background
+        premium_bg.draw(win)
+        
+        # 2. Confetti
+        confetti.update()
+        confetti.draw(win)
+        
+        # 3. Flash
+        screen_flash.update()
+        screen_flash.draw(win)
+        
+        # 4. Panel (Dark overlay for readability)
+        panel_w, panel_h = 600, 450
+        panel_x = (winwidth - panel_w) // 2
+        panel_y = (winheight - panel_h) // 2
+        
+        # Draw panel shadow and background
+        draw_shadow(win, (panel_x, panel_y, panel_w, panel_h), 20)
+        draw_rounded_rect(win, (0, 0, 0, 200), (panel_x, panel_y, panel_w, panel_h), 20)
+        
+        # 5. Text Content
+        # Title
+        title_text = "Course Completed!"
+        title_surf = title_font.render(title_text, True, Colors.TEXT_LIGHT)
+        win.blit(title_surf, (winwidth//2 - title_surf.get_width()//2, panel_y + 40))
+        
+        if is_new_best:
+            best_surf = info_font.render("New Best Score!", True, (255, 215, 0)) # Gold
+            win.blit(best_surf, (winwidth//2 - best_surf.get_width()//2, panel_y + 100))
+        
+        # Stats
+        y_off = 160
+        gap = 50
+        
+        # Par
+        par_surf = info_font.render(f"Par: {sheet.getPar()}", True, Colors.TEXT_LIGHT)
+        win.blit(par_surf, (winwidth//2 - par_surf.get_width()//2, panel_y + y_off))
+        
+        # Strokes
+        strokes_surf = info_font.render(f"Strokes: {sheet.getStrokes()}", True, Colors.TEXT_LIGHT)
+        win.blit(strokes_surf, (winwidth//2 - strokes_surf.get_width()//2, panel_y + y_off + gap))
+        
+        # Score
+        score_surf = info_font.render(f"Score: {sheet.getScore()}", True, Colors.ACCENT_BLUE)
+        win.blit(score_surf, (winwidth//2 - score_surf.get_width()//2, panel_y + y_off + gap*2))
+        
+        # Coins
+        coins_surf = info_font.render(f"Coins: {coins}", True, (255, 215, 0))
+        win.blit(coins_surf, (winwidth//2 - coins_surf.get_width()//2, panel_y + y_off + gap*3))
+        
+        # Continue prompt
+        prompt_surf = small_font.render("Click anywhere to continue...", True, (150, 150, 150))
+        win.blit(prompt_surf, (winwidth//2 - prompt_surf.get_width()//2, panel_y + panel_h - 40))
+        
+        pygame.display.update()
+        
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
+                sys.exit() # Fix crash
             if event.type == pygame.MOUSEBUTTONDOWN:
                 loop = False
                 break

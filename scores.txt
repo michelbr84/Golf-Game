@@ -1,6 +1,5 @@
 score 0
-coins 26
-0,0,255-False
+coins 2
 64,64,64-False
 255,0,0-False
 255,105,180-False
