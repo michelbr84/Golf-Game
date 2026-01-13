@@ -3,6 +3,7 @@ import os
 import tkinter as tk
 from tkinter import messagebox, simpledialog
 import sys
+import profiles
 import ui_style
 from ui_style import Colors, Fonts, draw_rounded_rect, draw_shadow, create_gradient_surface, create_vignette
 
@@ -369,6 +370,24 @@ def seedClick(pos):
                 root.destroy()
                 return seed
     return False
+
+
+def login():
+    """Prompt user for login name"""
+    root = tk.Tk()
+    root.withdraw()
+    root.attributes("-topmost", True)
+    
+    # Custom dialog style could be better, but simpledialog is robust
+    name = simpledialog.askstring("Welcome to Golf Game", "Enter your Player Name:")
+    
+    root.destroy()
+    
+    if not name or name.strip() == "":
+        name = "Player"
+        
+    profiles.login(name)
+    return name
 
 
 def init_shop_defaults():

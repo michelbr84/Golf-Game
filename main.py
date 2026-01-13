@@ -36,6 +36,8 @@ import physics
 import math
 import courses
 import startScreen
+import profiles
+import os
 from time import sleep, time
 import tkinter as tk
 from tkinter import messagebox
@@ -670,6 +672,10 @@ def redrawWindow(ball, line, shoot=False, update=True):
     global water, par, strokes, flagx
 
     # ========================================
+    
+
+
+    pygame.display.update()
     # PREMIUM BACKGROUND WITH GRADIENT + VIGNETTE
     # ========================================
     premium_bg.draw(win, background)
@@ -852,6 +858,22 @@ def redrawWindow(ball, line, shoot=False, update=True):
     screen_transition.draw(win)
 
     if update:
+        # Draw HUD (Moved to end for Z-order)
+        if profiles.current_user:
+            # Coin HUD - Display TOTAL coins (Saved + Collected this session)
+            # Or just Collected? User asked to see coins.
+            # Showing Total seems better.
+            total_coins = profiles.get_coins() + (coins - start_coins)
+            coin_text = Fonts.HUD_MEDIUM.render(f"Coins: {total_coins}", True, Colors.ACCENT_GOLD)
+            c_rect = coin_text.get_rect(topleft=(20, 20))
+            bg_rect = c_rect.inflate(20, 10)
+            draw_rounded_rect(win, (0, 0, 0, 100), bg_rect, 10)
+            win.blit(coin_text, (20, 20))
+            
+            # User HUD
+            user_text = Fonts.UI_SMALL.render(f"Player: {profiles.current_user}", True, Colors.TEXT_SECONDARY)
+            win.blit(user_text, (20, 50))
+
         powerBar()
 
 
@@ -916,6 +938,11 @@ def overHole(x,y):  # Determine if we are over top of the hole
     else:
         return False
 
+
+# Login Phase
+if not profiles.current_user:
+    startScreen.login()
+    coins = profiles.get_coins()
 
 list = courses.getPar(1)
 par = list[level - 1]
@@ -997,7 +1024,10 @@ while True:
             pygame.quit()
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
+                # Back to Menu (Restart Game)
                 pygame.quit()
+                os.execl(sys.executable, sys.executable, *sys.argv)
+                sys.exit()
             if event.key == pygame.K_SPACE:
                 fade()
                 if strokes == 1:
