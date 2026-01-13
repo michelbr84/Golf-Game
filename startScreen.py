@@ -368,8 +368,50 @@ def seedClick(pos):
                 seed = simpledialog.askstring("Seed Mode", "Enter a seed for procedural generation:\n(Leave empty to cancel)")
                 root.destroy()
                 return seed
-    return None
+    return False
 
+
+def init_shop_defaults():
+    """Initialize default balls if scores.txt is missing/empty"""
+    defaults = [
+        "255,255,255-True", # White (Unlocked)
+        "255,0,0-False",
+        "0,255,0-False",
+        "0,0,255-False",
+        "255,255,0-False",
+        "255,0,255-False",
+        "0,255,255-False",
+        "192,192,192-False",
+        "128,128,128-False",
+        "128,0,0-False",
+        "128,128,0-False",
+        "0,128,0-False",
+        "128,0,128-False",
+        "0,128,128-False",
+        "0,0,128-False",
+        "255,165,0-False"
+    ]
+    
+    existing = ""
+    if os.path.exists('scores.txt'):
+         try:
+             with open('scores.txt', 'r') as f:
+                 existing = f.read()
+         except:
+             pass
+             
+    if 'True' not in existing and 'False' not in existing:
+        try:
+            with open('scores.txt', 'a') as f:
+                if len(existing) > 0 and not existing.endswith('\n'):
+                    f.write('\n')
+                for d in defaults:
+                    f.write(d + '\n')
+        except:
+            pass
+
+# Initialize defaults on load
+init_shop_defaults()
 
 def click(pos):
     for i in buttons:

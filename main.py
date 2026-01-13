@@ -272,44 +272,55 @@ def showAudioSettings():
     global SOUND, MUSIC_VOLUME, SFX_VOLUME
     
     settings_surface = pygame.Surface((400, 300))
-    settings_surface.fill((220, 220, 220))
     
-    # Title
+    # Fonts
     title_font = pygame.font.SysFont('comicsansms', 30)
-    title_text = title_font.render('Audio Settings', 1, (64, 64, 64))
-    settings_surface.blit(title_text, (200 - title_text.get_width()//2, 20))
-    
-    # Sound toggle
     sound_font = pygame.font.SysFont('comicsansms', 20)
-    sound_text = sound_font.render(f'Sound: {"ON" if SOUND else "OFF"}', 1, (64, 64, 64))
-    settings_surface.blit(sound_text, (50, 80))
-    
-    # Music volume
-    music_text = sound_font.render(f'Music Volume: {int(MUSIC_VOLUME * 100)}%', 1, (64, 64, 64))
-    settings_surface.blit(music_text, (50, 120))
-    
-    # SFX volume
-    sfx_text = sound_font.render(f'SFX Volume: {int(SFX_VOLUME * 100)}%', 1, (64, 64, 64))
-    settings_surface.blit(sfx_text, (50, 160))
-    
-    # Instructions
-    inst_font = pygame.font.SysFont('comicsansms', 16)
-    inst_text = inst_font.render('Press S to toggle sound, M/S to adjust volumes', 1, (128, 128, 128))
-    settings_surface.blit(inst_text, (50, 220))
-    
-    close_text = inst_font.render('Press ESC to close', 1, (128, 128, 128))
-    settings_surface.blit(close_text, (50, 240))
-    
-    # Display settings
-    win.blit(settings_surface, (340, 150))
-    pygame.display.update()
-    
-    # Wait for user input
+    inst_font = pygame.font.SysFont('comicsansms', 14) # Smaller for detailed instructions
+
     waiting = True
     while waiting:
+        settings_surface.fill((220, 220, 220))
+
+        # Title
+        title_text = title_font.render('Audio Settings', 1, (64, 64, 64))
+        settings_surface.blit(title_text, (200 - title_text.get_width()//2, 20))
+        
+        # Values
+        sound_text = sound_font.render(f'Sound: {"ON" if SOUND else "OFF"}', 1, (64, 64, 64))
+        settings_surface.blit(sound_text, (50, 70))
+        
+        music_text = sound_font.render(f'Music: {int(MUSIC_VOLUME * 100)}%', 1, (64, 64, 64))
+        settings_surface.blit(music_text, (50, 110))
+        
+        sfx_text = sound_font.render(f'SFX: {int(SFX_VOLUME * 100)}%', 1, (64, 64, 64))
+        settings_surface.blit(sfx_text, (50, 150))
+        
+        # Instructions
+        # S: Toggle, M/N: Music, F/G: SFX
+        y_inst = 190
+        inst_lines = [
+            "Controls:",
+            "[S] Toggle Sound ON/OFF",
+            "[M] Increase Music   [N] Decrease Music",
+            "[F] Increase SFX     [G] Decrease SFX",
+            "[ESC] Close Menu"
+        ]
+        
+        for line in inst_lines:
+            t = inst_font.render(line, 1, (100, 100, 100))
+            settings_surface.blit(t, (30, y_inst))
+            y_inst += 25
+        
+        # Render to screen
+        win.blit(settings_surface, (340, 150))
+        pygame.display.update()
+        
+        # Event Loop
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
+                sys.exit()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     waiting = False
@@ -319,31 +330,22 @@ def showAudioSettings():
                         pygame.mixer.music.play(-1)
                     else:
                         pygame.mixer.music.stop()
-                    showAudioSettings()  # Refresh display
                 elif event.key == pygame.K_m:
                     MUSIC_VOLUME = max(0.0, min(1.0, MUSIC_VOLUME + 0.1))
                     pygame.mixer.music.set_volume(MUSIC_VOLUME)
-                    showAudioSettings()  # Refresh display
-                elif event.key == pygame.K_n:  # Use 'n' for decrease music
+                elif event.key == pygame.K_n:
                     MUSIC_VOLUME = max(0.0, min(1.0, MUSIC_VOLUME - 0.1))
                     pygame.mixer.music.set_volume(MUSIC_VOLUME)
-                    showAudioSettings()  # Refresh display
-                elif event.key == pygame.K_f:  # Use 'f' for increase SFX
+                elif event.key == pygame.K_f:
                     SFX_VOLUME = max(0.0, min(1.0, SFX_VOLUME + 0.1))
                     if SOUND:
-                        wrong.set_volume(SFX_VOLUME)
-                        puttSound.set_volume(SFX_VOLUME)
-                        inHole.set_volume(SFX_VOLUME)
-                        splash.set_volume(SFX_VOLUME)
-                    showAudioSettings()  # Refresh display
-                elif event.key == pygame.K_g:  # Use 'g' for decrease SFX
+                        for s in [wrong, puttSound, inHole, splash]:
+                            s.set_volume(SFX_VOLUME)
+                elif event.key == pygame.K_g:
                     SFX_VOLUME = max(0.0, min(1.0, SFX_VOLUME - 0.1))
                     if SOUND:
-                        wrong.set_volume(SFX_VOLUME)
-                        puttSound.set_volume(SFX_VOLUME)
-                        inHole.set_volume(SFX_VOLUME)
-                        splash.set_volume(SFX_VOLUME)
-                    showAudioSettings()  # Refresh display
+                        for s in [wrong, puttSound, inHole, splash]:
+                            s.set_volume(SFX_VOLUME)
 
 
 def endScreen(): # Display this screen when the user completes trhe course
@@ -1072,6 +1074,7 @@ while True:
                     for event in pygame.event.get():
                         if event.type == pygame.QUIT:
                             pygame.quit()
+                            sys.exit()
                         if event.type == pygame.MOUSEBUTTONDOWN:
                             strokes += 1
                             hazard = False
