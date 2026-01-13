@@ -182,6 +182,12 @@ O projeto está passando por uma grande atualização visual e de UX. Consulte o
 - [x] Física da bola com Squash & Stretch
 - [x] Partículas de poeira em impactos e lançamentos
 
+### ✨ Etapa 4 - Polimento Final & UI (CONCLUÍDA)
+- [x] Tela de "Course Completed" com tipografia Apple-style
+- [x] Overlay escuro para legibilidade de texto
+- [x] Correção de bugs de fechamento (sys.exit)
+- [x] Animação contínua na tela de vitória
+
 ## 🔧 Melhorias Técnicas
 - [x] Asset Manager centralizado para carregamento eficiente
 - [x] Sistema de Configurações (Config) para preferências
