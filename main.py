@@ -44,15 +44,18 @@ import ui_style
 from ui_style import (Colors, Fonts, HUDCard, draw_ball_shadow, draw_ball_premium, 
                       PremiumBackground, draw_shadow, draw_rounded_rect,
                       ParticleSystem, BallTrail, ParallaxBackground as ParallaxBG,
-                      ScreenTransition, CameraShake, ScreenFlash, FlagAnimation, ConfettiSystem)
+                      ScreenTransition, CameraShake, ScreenFlash, FlagAnimation, ConfettiSystem,
+                      BallPhysicsEffect, AssetManager, Config, draw_ball_squash_stretch, PlatformRenderer)
 
 # INITIALIZATION
 pygame.init()
 
-SOUND = False
+# Load Config
+Config.load()
+SOUND = Config.get('sfx_enabled', False)
 
-winwidth = 1080
-winheight = 600
+winwidth = Config.get('screen_width', 1080)
+winheight = Config.get('screen_height', 600)
 pygame.display.set_caption('Super Minigolf')
 
 # Initialize UI Style System
@@ -62,9 +65,10 @@ ui_style.init_ui()
 premium_bg = PremiumBackground(winwidth, winheight)
 
 # ETAPA 2 - Particle system and effects
-particle_system = ParticleSystem(max_particles=150)
+particle_system = ParticleSystem(max_particles=Config.get('particle_count', 150))
 ball_trail = BallTrail(max_length=15)
 parallax_bg = ParallaxBG(winwidth, winheight)
+ball_physics = BallPhysicsEffect() # Squash/Stretch effect
 
 # ETAPA 3 - Screen effects and animations
 screen_transition = ScreenTransition(winwidth, winheight)
@@ -74,20 +78,21 @@ flag_anim = FlagAnimation()
 confetti = ConfettiSystem(max_particles=80)
 
 # LOAD IMAGES
-icon = pygame.image.load(os.path.join('img', 'icon.ico'))
-icon = pygame.transform.scale(icon, (32,32))
-background = pygame.image.load(os.path.join('img', 'back.png'))
-sand = pygame.image.load(os.path.join('img', 'sand.png'))
-edge = pygame.image.load(os.path.join('img', 'sandEdge.png'))
-bottom = pygame.image.load(os.path.join('img', 'sandBottom.png'))
-green = pygame.image.load(os.path.join('img', 'green.png'))
-flag = pygame.image.load(os.path.join('img', 'flag.png'))
-water = pygame.image.load(os.path.join('img', 'water.png'))
-laser = pygame.image.load(os.path.join('img', 'laser.png'))
-sticky = pygame.image.load(os.path.join('img', 'sticky.png'))
-coinPics = [pygame.image.load(os.path.join('img', 'coin1.png')), pygame.image.load(os.path.join('img', 'coin2.png')), pygame.image.load(os.path.join('img', 'coin3.png')), pygame.image.load(os.path.join('img', 'coin4.png')), pygame.image.load(os.path.join('img', 'coin5.png')), pygame.image.load(os.path.join('img', 'coin6.png')), pygame.image.load(os.path.join('img', 'coin7.png')), pygame.image.load(os.path.join('img', 'coin8.png'))]
-powerMeter = pygame.image.load(os.path.join('img', 'power.png'))
-powerMeter = pygame.transform.scale(powerMeter, (150,150))
+icon = AssetManager.load_image(os.path.join('img', 'icon.ico'), (32, 32))
+background = AssetManager.load_image(os.path.join('img', 'back.png'), alpha=False)
+sand = AssetManager.load_image(os.path.join('img', 'sand.png'))
+edge = AssetManager.load_image(os.path.join('img', 'sandEdge.png'))
+bottom = AssetManager.load_image(os.path.join('img', 'sandBottom.png'))
+green = AssetManager.load_image(os.path.join('img', 'green.png'))
+flag = AssetManager.load_image(os.path.join('img', 'flag.png'))
+water = AssetManager.load_image(os.path.join('img', 'water.png'))
+laser = AssetManager.load_image(os.path.join('img', 'laser.png'))
+sticky = AssetManager.load_image(os.path.join('img', 'sticky.png'))
+
+# Load coin animation frames
+coinPics = [AssetManager.load_image(os.path.join('img', f'coin{i}.png')) for i in range(1, 9)]
+
+powerMeter = AssetManager.load_image(os.path.join('img', 'power.png'), (150, 150))
 
 # SET ICON
 pygame.display.set_icon(icon)
@@ -114,32 +119,33 @@ shoot = False
 start = True
 
 # SOUND SETTINGS
-SOUND = True
-MUSIC_VOLUME = 0.7
-SFX_VOLUME = 0.8
+MUSIC_VOLUME = Config.get('music_volume', 0.5)
+SFX_VOLUME = Config.get('sfx_volume', 0.7)
 
 # LOAD MUSIC AND SOUNDS
-if SOUND:
+if Config.get('sfx_enabled', True):
     try:
-        wrong = pygame.mixer.Sound(os.path.join('sounds', 'wrong12.wav'))
-        puttSound = pygame.mixer.Sound(os.path.join('sounds', 'putt.wav'))
-        inHole = pygame.mixer.Sound(os.path.join('sounds', 'inHole.wav'))
-        splash = pygame.mixer.Sound(os.path.join('sounds', 'splash.wav'))
+        wrong = AssetManager.load_sound(os.path.join('sounds', 'wrong12.wav'))
+        puttSound = AssetManager.load_sound(os.path.join('sounds', 'putt.wav'))
+        inHole = AssetManager.load_sound(os.path.join('sounds', 'inHole.wav'))
+        splash = AssetManager.load_sound(os.path.join('sounds', 'splash.wav'))
         
         # Set sound volumes
-        wrong.set_volume(SFX_VOLUME)
-        puttSound.set_volume(SFX_VOLUME)
-        inHole.set_volume(SFX_VOLUME)
-        splash.set_volume(SFX_VOLUME)
+        if wrong: wrong.set_volume(SFX_VOLUME)
+        if puttSound: puttSound.set_volume(SFX_VOLUME)
+        if inHole: inHole.set_volume(SFX_VOLUME)
+        if splash: splash.set_volume(SFX_VOLUME)
         
-        # Load and play background music
-        pygame.mixer.music.load(os.path.join('sounds', 'music.mp3'))
-        pygame.mixer.music.set_volume(MUSIC_VOLUME)
-        pygame.mixer.music.play(-1)
+        if Config.get('music_enabled', True):
+            # Load and play background music
+            pygame.mixer.music.load(os.path.join('sounds', 'music.mp3'))
+            pygame.mixer.music.set_volume(MUSIC_VOLUME)
+            pygame.mixer.music.play(-1)
         
         print("[SOUND] Audio system initialized successfully")
     except Exception as e:
         print(f"[SOUND ERROR] Could not load audio: {e}")
+        SOUND = False
         SOUND = False
 
 # POWER UP VARS
@@ -607,8 +613,9 @@ def redrawWindow(ball, line, shoot=False, update=True):
         elif i[4] == 'edge':
             win.blit(edge, (i[0], i[1]))
         elif i[4] == 'bottom':
-            for x in range(i[2] // 64):
-                win.blit(bottom, (i[0] + (64 * x), i[1]))
+            # ETAPA 3 - Procedural Material: Stone
+            tex = PlatformRenderer.create_texture(i[2], 64, 'stone')
+            win.blit(tex, (i[0], i[1]))
         elif i[4] == 'flag':
             # ETAPA 3 - Animated flag with wind effect
             flag_anim.update()
@@ -624,14 +631,16 @@ def redrawWindow(ball, line, shoot=False, update=True):
             pygame.draw.circle(win, (0, 0, 0), (i[0] + 2, i[1] + i[3]), 6)
             flagx = i[0]
         elif i[4] == 'floor':
-            for x in range(i[2] // 64):
-                win.blit(bottom, (i[0] + 64 * x, i[1]))
+            # ETAPA 3 - Procedural Material: Wood
+            tex = PlatformRenderer.create_texture(i[2], 64, 'wood')
+            win.blit(tex, (i[0], i[1]))
         elif i[4] == 'green':
             for x in range(i[2] // 64):
                 win.blit(green, (i[0] + (64 * x), i[1]))
         elif i[4] == 'wall':
-            for x in range(i[3] // 64):
-                win.blit(edge, (i[0], i[1] + (64 * x)))
+            # ETAPA 3 - Procedural Material: Metal
+            tex = PlatformRenderer.create_texture(64, i[3], 'metal')
+            win.blit(tex, (i[0], i[1]))
         elif i[4] == 'laser':
             for x in range(i[3] // 64):
                 win.blit(laser, (i[0], i[1] + (64 * x)))
@@ -662,10 +671,17 @@ def redrawWindow(ball, line, shoot=False, update=True):
     ball_trail.draw(win, ballColor)
 
     # ========================================
-    # PREMIUM BALL WITH SHADOW AND HIGHLIGHT
+    # PREMIUM BALL WITH SHADOW AND HIGHLIGHT + SQUASH/STRETCH
     # ========================================
     draw_ball_shadow(win, ball, 5)
-    draw_ball_premium(win, ball, ballColor, 5)
+    
+    # Calculate velocity for squash/stretch
+    # (In a real implementation we would pass velocity properly)
+    velocity = (0, 0) # Placeholder
+    ball_physics.update(velocity)
+    
+    scale = ball_physics.get_scale()
+    draw_ball_squash_stretch(win, ball, ballColor, 5, scale)
     
     # ========================================
     # ETAPA 2 - PARTICLE EFFECTS
@@ -994,6 +1010,14 @@ while True:
                                     power = (math.pi - powerAngle) * 30
                                 else:
                                     power = (math.pi - powerAngle) * 40
+                            
+                            # Trigger ball stretch effect
+                            ball_physics.on_launch(power / 30) # Normalize power roughly
+                            ball_trail.clear()
+                            particle_system.emit_dust(ballStationary[0], ballStationary[1], count=8)
+                            if SOUND and not put:
+                                puttSound.play()
+
                             shootPos = ballStationary
                             powerLock = True
                             break
@@ -1211,6 +1235,12 @@ while True:
                                 ballCords = (ballCords[0], ballCords[1] - subtract)
                                 break
                         ballStationary = ballCords
+                        
+                        # ETAPA 3 - Visual Feedback
+                        ball_physics.on_collision('vertical')
+                        particle_system.emit_dust(ballCords[0], ballCords[1], count=5)
+                        if power > 5:
+                            camera_shake.shake(intensity=min(5, int(power/3)))
 
                         if i[4] == 'sand':
                             if SOUND and power > 5:  # Only play sound if ball has significant power
@@ -1271,6 +1301,12 @@ while True:
                                 ballCords = (ballCords[0] - subtract, ballCords[1])
                                 break
                         ballStationary = ballCords
+                        
+                        # ETAPA 3 - Visual Feedback
+                        ball_physics.on_collision('horizontal')
+                        particle_system.emit_dust(ballCords[0], ballCords[1], count=5)
+                        if power > 5:
+                            camera_shake.shake(intensity=min(5, int(power/3)))
 
                         if i[4] == 'sticky' or stickyPower:
                             subtract = 0
@@ -1307,6 +1343,12 @@ while True:
                                 ballCords = (ballCords[0] + subtract, ballCords[1])
                                 break
                         ballStationary = ballCords
+                        
+                        # ETAPA 3 - Visual Feedback
+                        ball_physics.on_collision('horizontal')
+                        particle_system.emit_dust(ballCords[0], ballCords[1], count=5)
+                        if power > 5:
+                            camera_shake.shake(intensity=min(5, int(power/3)))
 
                         if i[4] == 'sticky' or stickyPower:
                             subtract = 0

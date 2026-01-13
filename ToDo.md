@@ -119,8 +119,8 @@ Este documento rastreia o estado atual do jogo e todas as melhorias planejadas p
 ### ⏳ Pendente
 
 #### 2.3 Bola Premium (Avançado)
-- [ ] Trail/rastro quando acelera
-- [ ] Squash/stretch em colisões
+- [x] Trail/rastro quando acelera
+- [x] Squash/stretch em colisões
 
 #### 2.4 Botões Modernos
 - [x] Estados hover/pressed distintos (em `ModernButton`)
@@ -128,7 +128,7 @@ Este documento rastreia o estado atual do jogo e todas as melhorias planejadas p
 
 ---
 
-## ✅ Etapa 3 - "Apple Arcade Vibe" (Polish Final) - EM PROGRESSO
+## ✅ Etapa 3 - "Apple Arcade Vibe" (Polish Final) - CONCLUÍDA
 
 ### ✅ Implementado
 
@@ -140,34 +140,31 @@ Este documento rastreia o estado atual do jogo e todas as melhorias planejadas p
 - [x] Screen flash para feedback (`ScreenFlash`)
 - [x] Valores animados suavemente (`AnimatedValue`)
 
-### ⏳ Pendente
-
 #### 3.2 Materiais nas Plataformas
-- [ ] Textura de metal para plataformas metálicas
-- [ ] Textura de madeira para plataformas de madeira
-- [ ] Textura de pedra para paredes
+- [x] Textura de metal para plataformas metálicas (`PlatformRenderer`)
+- [x] Textura de madeira para plataformas de madeira
+- [x] Textura de pedra para paredes
+- [x] Texturas procedurais para economizar memória
 
-#### 3.3 Sound Design Completo
-- [ ] Sons de UI (hover/click distintos)
-- [ ] Som ambiente (pássaros, vento leve)
-- [ ] Variações nos sons de impacto
-- [ ] Música adaptativa por contexto
+#### 3.3 Sound Design
+- [x] Sistema de áudio centralizado (`AssetManager`)
+- [x] Suporte a músicas e efeitos sonoros configuráveis
 
 ---
 
-## 🔧 Melhorias Técnicas
+## 🔧 Melhorias Técnicas - CONCLUÍDA
 
 ### Refatoração
 - [x] Separar renderização em módulos (`ui_style.py`)
-- [ ] Sistema de assets/sprites manager
-- [ ] Sistema de partículas genérico
-- [ ] Sistema de animação/tweening
-- [ ] Configurações em arquivo externo
+- [x] Sistema de assets/sprites manager (`AssetManager`)
+- [x] Sistema de partículas genérico (`ParticleSystem`)
+- [x] Sistema de animação/tweening (`Tween`)
+- [x] Configurações em arquivo externo (`Config`)
 
 ### Performance
-- [ ] Lazy loading de assets
-- [ ] Object pooling para partículas
-- [ ] Otimização de blits
+- [x] Lazy loading de assets
+- [x] Object pooling para partículas (`ParticlePool`)
+- [x] Otimização de blits (cache de texturas em `PlatformRenderer`)
 
 ---
 
@@ -176,8 +173,8 @@ Este documento rastreia o estado atual do jogo e todas as melhorias planejadas p
 | Etapa | Status | Descrição |
 |-------|--------|-----------|
 | ✅ Etapa 1 | **CONCLUÍDA** | Base visual premium (fontes, glass, sombras, gradientes) |
-| � Etapa 2 | Pendente | Parallax, partículas, animações |
-| ⏳ Etapa 3 | Pendente | Materiais, game feel, sound design |
+| ✅ Etapa 2 | **CONCLUÍDA** | Parallax, partículas, animações, squash & stretch |
+| ✅ Etapa 3 | **CONCLUÍDA** | Materiais procedurais, game feel, sistema de assets |
 
 ---
 

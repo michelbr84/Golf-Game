@@ -978,25 +978,578 @@ class ConfettiSystem:
 
 
 # ============================================================================
+# ETAPA 2 - BALL PHYSICS EFFECTS (Squash/Stretch)
+# ============================================================================
+
+class BallPhysicsEffect:
+    """Handles ball squash/stretch effects for realistic physics feel"""
+    
+    def __init__(self):
+        self.scale_x = 1.0
+        self.scale_y = 1.0
+        self.target_scale_x = 1.0
+        self.target_scale_y = 1.0
+        self.recovery_speed = 0.15
+        self.last_velocity = (0, 0)
+    
+    def on_collision(self, direction='vertical'):
+        """Trigger squash effect on collision"""
+        if direction == 'vertical':
+            # Squash vertically on floor/ceiling hit
+            self.scale_x = 1.3
+            self.scale_y = 0.7
+        else:
+            # Squash horizontally on wall hit
+            self.scale_x = 0.7
+            self.scale_y = 1.3
+    
+    def on_launch(self, power):
+        """Stretch in direction of movement on launch"""
+        stretch = min(1.0 + power * 0.02, 1.4)
+        self.scale_x = 1.0 / stretch
+        self.scale_y = stretch
+    
+    def update(self, velocity=(0, 0)):
+        """Update ball physics effect towards normal"""
+        # Smooth recovery to normal scale
+        self.scale_x += (self.target_scale_x - self.scale_x) * self.recovery_speed
+        self.scale_y += (self.target_scale_y - self.scale_y) * self.recovery_speed
+        
+        # Apply velocity-based stretch
+        speed = math.sqrt(velocity[0]**2 + velocity[1]**2)
+        if speed > 5:
+            stretch_factor = min(1.0 + speed * 0.01, 1.2)
+            angle = math.atan2(-velocity[1], velocity[0])
+            self.target_scale_x = 1.0 + (stretch_factor - 1.0) * abs(math.cos(angle))
+            self.target_scale_y = 1.0 + (stretch_factor - 1.0) * abs(math.sin(angle))
+        else:
+            self.target_scale_x = 1.0
+            self.target_scale_y = 1.0
+        
+        self.last_velocity = velocity
+    
+    def get_scale(self):
+        """Get current scale for rendering"""
+        return (self.scale_x, self.scale_y)
+
+
+def draw_ball_squash_stretch(surface, pos, color, radius, scale):
+    """Draw ball with squash/stretch effect"""
+    x, y = int(pos[0]), int(pos[1])
+    scale_x, scale_y = scale
+    
+    # Calculate ellipse dimensions
+    w = int(radius * 2 * scale_x)
+    h = int(radius * 2 * scale_y)
+    
+    if w < 2 or h < 2:
+        return
+    
+    # Create ball surface
+    ball_surf = pygame.Surface((w + 4, h + 4), pygame.SRCALPHA)
+    
+    # Draw outer ring (shadow)
+    pygame.draw.ellipse(ball_surf, (0, 0, 0), (0, 0, w + 2, h + 2))
+    
+    # Draw colored ball
+    darker = tuple(max(0, c - 40) for c in color[:3])
+    pygame.draw.ellipse(ball_surf, darker, (1, 1, w, h))
+    pygame.draw.ellipse(ball_surf, color, (2, 2, w - 2, h - 2))
+    
+    # Draw highlight
+    highlight_w = max(2, w // 3)
+    highlight_h = max(2, h // 3)
+    pygame.draw.ellipse(ball_surf, (255, 255, 255, 100), 
+                       (w // 4, h // 4, highlight_w, highlight_h))
+    
+    # Blit centered
+    surface.blit(ball_surf, (x - w // 2 - 1, y - h // 2 - 1))
+
+
+# ============================================================================
+# ETAPA 3 - PLATFORM RENDERER (Procedural Textures)
+# ============================================================================
+
+class PlatformRenderer:
+    """Creates procedural textures for platforms"""
+    
+    # Material colors
+    MATERIALS = {
+        'metal': {
+            'base': (120, 130, 140),
+            'highlight': (180, 190, 200),
+            'shadow': (60, 70, 80),
+            'pattern': 'lines'
+        },
+        'wood': {
+            'base': (139, 90, 43),
+            'highlight': (180, 120, 60),
+            'shadow': (80, 50, 20),
+            'pattern': 'grain'
+        },
+        'stone': {
+            'base': (130, 130, 130),
+            'highlight': (170, 170, 170),
+            'shadow': (80, 80, 80),
+            'pattern': 'noise'
+        },
+        'grass': {
+            'base': (76, 153, 76),
+            'highlight': (100, 180, 100),
+            'shadow': (50, 100, 50),
+            'pattern': 'none'
+        }
+    }
+    
+    _cache = {}
+    
+    @classmethod
+    def create_texture(cls, width, height, material='stone'):
+        """Create a textured platform surface"""
+        import random
+        
+        cache_key = f"{width}_{height}_{material}"
+        if cache_key in cls._cache:
+            return cls._cache[cache_key]
+        
+        mat = cls.MATERIALS.get(material, cls.MATERIALS['stone'])
+        surface = pygame.Surface((width, height), pygame.SRCALPHA)
+        
+        # Fill base color
+        surface.fill(mat['base'])
+        
+        # Add pattern based on material
+        if mat['pattern'] == 'lines':
+            # Metal lines
+            for i in range(0, width, 8):
+                pygame.draw.line(surface, mat['highlight'], (i, 0), (i, height), 1)
+        
+        elif mat['pattern'] == 'grain':
+            # Wood grain
+            for i in range(0, height, 4):
+                offset = random.randint(-2, 2)
+                color = mat['highlight'] if i % 8 < 4 else mat['shadow']
+                pygame.draw.line(surface, color, (0, i), (width, i + offset), 1)
+        
+        elif mat['pattern'] == 'noise':
+            # Stone noise
+            for _ in range(width * height // 20):
+                px = random.randint(0, width - 2)
+                py = random.randint(0, height - 2)
+                color = random.choice([mat['highlight'], mat['shadow']])
+                pygame.draw.rect(surface, color, (px, py, 2, 2))
+        
+        # Add bevel effect (highlight top, shadow bottom)
+        pygame.draw.line(surface, mat['highlight'], (0, 0), (width, 0), 2)
+        pygame.draw.line(surface, mat['shadow'], (0, height - 1), (width, height - 1), 2)
+        
+        cls._cache[cache_key] = surface
+        return surface
+    
+    @classmethod
+    def clear_cache(cls):
+        """Clear texture cache"""
+        cls._cache = {}
+
+
+# ============================================================================
+# TECHNICAL - ASSET MANAGER
+# ============================================================================
+
+class AssetManager:
+    """Centralized asset loading and caching"""
+    
+    _images = {}
+    _sounds = {}
+    _fonts = {}
+    _initialized = False
+    
+    @classmethod
+    def init(cls):
+        """Initialize the asset manager"""
+        cls._initialized = True
+        print("[ASSETS] Asset manager initialized")
+    
+    @classmethod
+    def load_image(cls, path, scale=None, alpha=True):
+        """Load and cache an image"""
+        cache_key = f"{path}_{scale}"
+        
+        if cache_key not in cls._images:
+            try:
+                import os
+                img = pygame.image.load(path)
+                if alpha:
+                    img = img.convert_alpha()
+                else:
+                    img = img.convert()
+                
+                if scale:
+                    img = pygame.transform.scale(img, scale)
+                
+                cls._images[cache_key] = img
+            except Exception as e:
+                print(f"[ASSETS] Failed to load image {path}: {e}")
+                # Return placeholder
+                placeholder = pygame.Surface((32, 32))
+                placeholder.fill((255, 0, 255))
+                return placeholder
+        
+        return cls._images[cache_key]
+    
+    @classmethod
+    def load_sound(cls, path):
+        """Load and cache a sound"""
+        if path not in cls._sounds:
+            try:
+                cls._sounds[path] = pygame.mixer.Sound(path)
+            except Exception as e:
+                print(f"[ASSETS] Failed to load sound {path}: {e}")
+                return None
+        return cls._sounds[path]
+    
+    @classmethod
+    def get_font(cls, name, size, bold=False):
+        """Get a cached font"""
+        cache_key = f"{name}_{size}_{bold}"
+        if cache_key not in cls._fonts:
+            cls._fonts[cache_key] = pygame.font.SysFont(name, size, bold=bold)
+        return cls._fonts[cache_key]
+    
+    @classmethod
+    def clear_cache(cls):
+        """Clear all cached assets"""
+        cls._images = {}
+        cls._sounds = {}
+        cls._fonts = {}
+
+
+# ============================================================================
+# TECHNICAL - TWEEN SYSTEM
+# ============================================================================
+
+class Tween:
+    """Animation tweening system for smooth transitions"""
+    
+    # Easing functions
+    @staticmethod
+    def linear(t):
+        return t
+    
+    @staticmethod
+    def ease_in_quad(t):
+        return t * t
+    
+    @staticmethod
+    def ease_out_quad(t):
+        return t * (2 - t)
+    
+    @staticmethod
+    def ease_in_out_quad(t):
+        return 2 * t * t if t < 0.5 else -1 + (4 - 2 * t) * t
+    
+    @staticmethod
+    def ease_in_cubic(t):
+        return t * t * t
+    
+    @staticmethod
+    def ease_out_cubic(t):
+        t -= 1
+        return t * t * t + 1
+    
+    @staticmethod
+    def ease_in_out_cubic(t):
+        if t < 0.5:
+            return 4 * t * t * t
+        t = 2 * t - 2
+        return 0.5 * t * t * t + 1
+    
+    @staticmethod
+    def ease_out_elastic(t):
+        if t == 0 or t == 1:
+            return t
+        p = 0.3
+        s = p / 4
+        return math.pow(2, -10 * t) * math.sin((t - s) * (2 * math.pi) / p) + 1
+    
+    @staticmethod
+    def ease_out_bounce(t):
+        if t < 1/2.75:
+            return 7.5625 * t * t
+        elif t < 2/2.75:
+            t -= 1.5/2.75
+            return 7.5625 * t * t + 0.75
+        elif t < 2.5/2.75:
+            t -= 2.25/2.75
+            return 7.5625 * t * t + 0.9375
+        else:
+            t -= 2.625/2.75
+            return 7.5625 * t * t + 0.984375
+
+
+class TweenManager:
+    """Manages multiple tweens"""
+    
+    def __init__(self):
+        self.tweens = []
+    
+    def add(self, start, end, duration, easing='ease_out_quad', on_complete=None):
+        """Add a new tween"""
+        easing_func = getattr(Tween, easing, Tween.linear)
+        tween = {
+            'start': start,
+            'end': end,
+            'duration': duration,
+            'elapsed': 0,
+            'easing': easing_func,
+            'on_complete': on_complete,
+            'current': start
+        }
+        self.tweens.append(tween)
+        return len(self.tweens) - 1
+    
+    def update(self, dt=1):
+        """Update all tweens"""
+        completed = []
+        
+        for i, tween in enumerate(self.tweens):
+            tween['elapsed'] += dt
+            progress = min(tween['elapsed'] / tween['duration'], 1.0)
+            eased = tween['easing'](progress)
+            
+            tween['current'] = tween['start'] + (tween['end'] - tween['start']) * eased
+            
+            if progress >= 1.0:
+                completed.append(i)
+                if tween['on_complete']:
+                    tween['on_complete']()
+        
+        # Remove completed tweens
+        for i in reversed(completed):
+            self.tweens.pop(i)
+    
+    def get_value(self, index):
+        """Get current value of a tween"""
+        if 0 <= index < len(self.tweens):
+            return self.tweens[index]['current']
+        return None
+    
+    def clear(self):
+        """Clear all tweens"""
+        self.tweens = []
+
+
+# ============================================================================
+# TECHNICAL - PARTICLE POOL
+# ============================================================================
+
+class ParticlePool:
+    """Object pool for particles to reduce allocation"""
+    
+    def __init__(self, size=200):
+        self.size = size
+        self.pool = []
+        self.active = []
+        self._init_pool()
+    
+    def _init_pool(self):
+        """Pre-allocate particle objects"""
+        self.pool = [{
+            'x': 0, 'y': 0, 'vx': 0, 'vy': 0,
+            'color': (255, 255, 255), 'size': 1,
+            'lifetime': 0, 'max_lifetime': 1,
+            'gravity': 0, 'fade': True, 'active': False
+        } for _ in range(self.size)]
+    
+    def spawn(self, x, y, vx, vy, color, size, lifetime, gravity=0.1, fade=True):
+        """Get a particle from pool"""
+        for p in self.pool:
+            if not p['active']:
+                p['x'] = x
+                p['y'] = y
+                p['vx'] = vx
+                p['vy'] = vy
+                p['color'] = color
+                p['size'] = size
+                p['lifetime'] = lifetime
+                p['max_lifetime'] = lifetime
+                p['gravity'] = gravity
+                p['fade'] = fade
+                p['active'] = True
+                self.active.append(p)
+                return p
+        return None  # Pool exhausted
+    
+    def update(self):
+        """Update all active particles"""
+        to_remove = []
+        
+        for p in self.active:
+            p['x'] += p['vx']
+            p['y'] += p['vy']
+            p['vy'] += p['gravity']
+            p['lifetime'] -= 1
+            
+            if p['lifetime'] <= 0:
+                p['active'] = False
+                to_remove.append(p)
+        
+        for p in to_remove:
+            self.active.remove(p)
+    
+    def draw(self, surface):
+        """Draw all active particles"""
+        for p in self.active:
+            if p['fade']:
+                alpha = int(255 * (p['lifetime'] / p['max_lifetime']))
+            else:
+                alpha = 255
+            
+            size = max(1, int(p['size'] * (p['lifetime'] / p['max_lifetime'])))
+            if size > 0:
+                particle_surf = pygame.Surface((size * 2, size * 2), pygame.SRCALPHA)
+                color_with_alpha = (*p['color'][:3], alpha)
+                pygame.draw.circle(particle_surf, color_with_alpha, (size, size), size)
+                surface.blit(particle_surf, (int(p['x']) - size, int(p['y']) - size))
+    
+    def clear(self):
+        """Clear all active particles"""
+        for p in self.active:
+            p['active'] = False
+        self.active = []
+    
+    def count_active(self):
+        """Get number of active particles"""
+        return len(self.active)
+
+
+# ============================================================================
+# TECHNICAL - CONFIG SYSTEM
+# ============================================================================
+
+class Config:
+    """External configuration system"""
+    
+    _settings = {
+        # Display
+        'screen_width': 1080,
+        'screen_height': 600,
+        'fullscreen': False,
+        'vsync': True,
+        
+        # Audio
+        'music_volume': 0.5,
+        'sfx_volume': 0.7,
+        'music_enabled': True,
+        'sfx_enabled': True,
+        
+        # Graphics
+        'particles_enabled': True,
+        'particle_count': 150,
+        'parallax_enabled': True,
+        'shadows_enabled': True,
+        'trail_enabled': True,
+        
+        # Gameplay
+        'power_multiplier': 1.0,
+        'ball_radius': 5,
+        
+        # UI
+        'show_fps': False,
+        'show_hints': True,
+    }
+    
+    @classmethod
+    def get(cls, key, default=None):
+        """Get a config value"""
+        return cls._settings.get(key, default)
+    
+    @classmethod
+    def set(cls, key, value):
+        """Set a config value"""
+        cls._settings[key] = value
+    
+    @classmethod
+    def load(cls, filepath='config.json'):
+        """Load config from JSON file"""
+        import json
+        import os
+        
+        if os.path.exists(filepath):
+            try:
+                with open(filepath, 'r') as f:
+                    loaded = json.load(f)
+                    cls._settings.update(loaded)
+                print(f"[CONFIG] Loaded from {filepath}")
+            except Exception as e:
+                print(f"[CONFIG] Failed to load: {e}")
+    
+    @classmethod
+    def save(cls, filepath='config.json'):
+        """Save config to JSON file"""
+        import json
+        try:
+            with open(filepath, 'w') as f:
+                json.dump(cls._settings, f, indent=2)
+            print(f"[CONFIG] Saved to {filepath}")
+        except Exception as e:
+            print(f"[CONFIG] Failed to save: {e}")
+    
+    @classmethod
+    def reset(cls):
+        """Reset to default settings"""
+        cls._settings = {
+            'screen_width': 1080,
+            'screen_height': 600,
+            'fullscreen': False,
+            'vsync': True,
+            'music_volume': 0.5,
+            'sfx_volume': 0.7,
+            'music_enabled': True,
+            'sfx_enabled': True,
+            'particles_enabled': True,
+            'particle_count': 150,
+            'parallax_enabled': True,
+            'shadows_enabled': True,
+            'trail_enabled': True,
+            'power_multiplier': 1.0,
+            'ball_radius': 5,
+            'show_fps': False,
+            'show_hints': True,
+        }
+
+
+# ============================================================================
 # INITIALIZATION
 # ============================================================================
 
 def init_ui():
     """Initialize all UI systems - call after pygame.init()"""
     Fonts.init()
+    AssetManager.init()
     print("[UI] UI Style system initialized")
 
 
 # Export commonly used items
 __all__ = [
-    'Colors', 'Fonts', 
+    # Core
+    'Colors', 'Fonts', 'Config',
+    # Drawing utilities
     'draw_rounded_rect', 'create_gradient_surface', 'create_vignette',
-    'draw_shadow', 'draw_ball_shadow', 'draw_ball_premium',
+    'draw_shadow', 'draw_ball_shadow', 'draw_ball_premium', 'draw_ball_squash_stretch',
+    # UI Components
     'GlassCard', 'HUDCard', 'ModernButton', 'PremiumBackground',
+    # Etapa 2 - Effects
     'Particle', 'ParticleSystem', 'BallTrail', 'ParallaxLayer', 'ParallaxBackground',
+    'BallPhysicsEffect',
+    # Etapa 3 - Polish
     'ScreenTransition', 'CameraShake', 'ScreenFlash', 'AnimatedValue', 
-    'FlagAnimation', 'ConfettiSystem',
+    'FlagAnimation', 'ConfettiSystem', 'PlatformRenderer',
+    # Technical
+    'AssetManager', 'Tween', 'TweenManager', 'ParticlePool',
+    # Init
     'init_ui'
 ]
+
 
 

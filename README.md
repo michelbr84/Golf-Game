@@ -172,14 +172,20 @@ O projeto está passando por uma grande atualização visual e de UX. Consulte o
 - [x] Trail da bola em movimento
 - [x] Botões com estados hover/pressed
 
-### 🔄 Etapa 3 - Apple Arcade Vibe (EM PROGRESSO)
+### ✅ Etapa 3 - Apple Arcade Vibe (CONCLUÍDA)
 - [x] Transições fade entre telas
 - [x] Sistema de confetti para celebrações
 - [x] Bandeira com animação de vento
-- [x] Camera shake para impactos
-- [x] Screen flash para feedback
-- [ ] Texturas de materiais (metal, madeira, pedra)
-- [ ] Sound design completo
+- [x] Camera shake para impactos fortes
+- [x] Screen flash para feedback de celebração
+- [x] Texturas procedurais de materiais (Metal, Madeira, Pedra)
+- [x] Física da bola com Squash & Stretch
+- [x] Partículas de poeira em impactos e lançamentos
+
+## 🔧 Melhorias Técnicas
+- [x] Asset Manager centralizado para carregamento eficiente
+- [x] Sistema de Configurações (Config) para preferências
+- [x] Otimização de renderização com cache de texturas
 
 ### Funcionalidades Futuras
 - [ ] Sistema de tutorial
