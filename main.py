@@ -41,7 +41,9 @@ import tkinter as tk
 from tkinter import messagebox
 import sys
 import ui_style
-from ui_style import Colors, Fonts, HUDCard, draw_ball_shadow, draw_ball_premium, PremiumBackground, draw_shadow, draw_rounded_rect
+from ui_style import (Colors, Fonts, HUDCard, draw_ball_shadow, draw_ball_premium, 
+                      PremiumBackground, draw_shadow, draw_rounded_rect,
+                      ParticleSystem, BallTrail, ParallaxBackground as ParallaxBG)
 
 # INITIALIZATION
 pygame.init()
@@ -57,6 +59,11 @@ ui_style.init_ui()
 
 # Create premium background
 premium_bg = PremiumBackground(winwidth, winheight)
+
+# ETAPA 2 - Particle system and effects
+particle_system = ParticleSystem(max_particles=150)
+ball_trail = BallTrail(max_length=15)
+parallax_bg = ParallaxBG(winwidth, winheight)
 
 # LOAD IMAGES
 icon = pygame.image.load(os.path.join('img', 'icon.ico'))
@@ -569,6 +576,11 @@ def redrawWindow(ball, line, shoot=False, update=True):
     premium_bg.draw(win, background)
     
     # ========================================
+    # ETAPA 2 - PARALLAX CLOUDS
+    # ========================================
+    parallax_bg.draw(win)
+    
+    # ========================================
     # DRAW LEVEL OBJECTS
     # ========================================
     for i in objects:
@@ -626,10 +638,23 @@ def redrawWindow(ball, line, shoot=False, update=True):
         pygame.draw.line(win, (0, 0, 0), ballStationary, line, 2)
 
     # ========================================
+    # ETAPA 2 - BALL TRAIL
+    # ========================================
+    if shoot:
+        ball_trail.add_position(ball[0], ball[1])
+    ball_trail.draw(win, ballColor)
+
+    # ========================================
     # PREMIUM BALL WITH SHADOW AND HIGHLIGHT
     # ========================================
     draw_ball_shadow(win, ball, 5)
     draw_ball_premium(win, ball, ballColor, 5)
+    
+    # ========================================
+    # ETAPA 2 - PARTICLE EFFECTS
+    # ========================================
+    particle_system.update()
+    particle_system.draw(win)
 
     # ========================================
     # PREMIUM HUD WITH GLASS CARDS
@@ -1040,6 +1065,8 @@ while True:
                             i[5] = False  # Directly disable the coin
                             courses.coinHit(level - 1)
                             coins += 1
+                            # ETAPA 2 - Sparkle effect on coin collect
+                            particle_system.emit_sparkle(coin_x + 16, coin_y + 16)
 
                 if i[4] == 'laser':  # if the ball hits the laser hazard
                     if ballCords[0] > i[0] and ballCords[0] < i[0] + i[2] and ballCords[1] > i[1] and ballCords[1] < i[1] + i[3]:
@@ -1079,6 +1106,10 @@ while True:
 
                 elif i[4] == 'water':
                     if ballCords[1] > i[1] - 6 and ballCords[1] < i[1] + 8 and ballCords[0] < i[0] + i[2] and ballCords[0] > i[0] + 2:
+                        # ETAPA 2 - Water splash particles
+                        particle_system.emit_splash(ballCords[0], ballCords[1])
+                        ball_trail.clear()
+                        
                         ballCords = shootPos
                         subtract = 0
                         hazard = True

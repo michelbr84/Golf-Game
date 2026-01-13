@@ -484,6 +484,239 @@ class PremiumBackground:
 
 
 # ============================================================================
+# ETAPA 2 - PARTICLE SYSTEM
+# ============================================================================
+
+class Particle:
+    """Individual particle for effects"""
+    
+    def __init__(self, x, y, vx, vy, color, size, lifetime, gravity=0.1, fade=True):
+        self.x = x
+        self.y = y
+        self.vx = vx
+        self.vy = vy
+        self.color = color
+        self.size = size
+        self.lifetime = lifetime
+        self.max_lifetime = lifetime
+        self.gravity = gravity
+        self.fade = fade
+        self.alive = True
+    
+    def update(self):
+        """Update particle position and lifetime"""
+        self.x += self.vx
+        self.y += self.vy
+        self.vy += self.gravity
+        self.lifetime -= 1
+        
+        if self.lifetime <= 0:
+            self.alive = False
+    
+    def draw(self, surface):
+        """Draw the particle"""
+        if not self.alive:
+            return
+            
+        # Calculate alpha based on lifetime
+        if self.fade:
+            alpha = int(255 * (self.lifetime / self.max_lifetime))
+        else:
+            alpha = 255
+        
+        # Create particle surface
+        size = max(1, int(self.size * (self.lifetime / self.max_lifetime)))
+        if size > 0:
+            particle_surf = pygame.Surface((size * 2, size * 2), pygame.SRCALPHA)
+            color_with_alpha = (*self.color[:3], alpha)
+            pygame.draw.circle(particle_surf, color_with_alpha, (size, size), size)
+            surface.blit(particle_surf, (int(self.x) - size, int(self.y) - size))
+
+
+class ParticleSystem:
+    """Manages multiple particles for various effects"""
+    
+    def __init__(self, max_particles=200):
+        self.particles = []
+        self.max_particles = max_particles
+    
+    def emit_dust(self, x, y, count=5):
+        """Emit dust particles (ball hitting ground)"""
+        import random
+        for _ in range(count):
+            vx = random.uniform(-1.5, 1.5)
+            vy = random.uniform(-2, -0.5)
+            size = random.randint(2, 4)
+            lifetime = random.randint(15, 30)
+            color = (180, 160, 140)  # Dusty brown
+            self._add_particle(x, y, vx, vy, color, size, lifetime, gravity=0.1)
+    
+    def emit_splash(self, x, y, count=10):
+        """Emit water splash particles"""
+        import random
+        for _ in range(count):
+            vx = random.uniform(-3, 3)
+            vy = random.uniform(-5, -2)
+            size = random.randint(3, 6)
+            lifetime = random.randint(20, 40)
+            color = (100, 180, 255)  # Water blue
+            self._add_particle(x, y, vx, vy, color, size, lifetime, gravity=0.15)
+    
+    def emit_sparkle(self, x, y, count=8):
+        """Emit coin sparkle particles"""
+        import random
+        for _ in range(count):
+            angle = random.uniform(0, 6.28)
+            speed = random.uniform(1, 3)
+            vx = math.cos(angle) * speed
+            vy = math.sin(angle) * speed
+            size = random.randint(2, 4)
+            lifetime = random.randint(15, 25)
+            color = (255, 215, 0)  # Gold
+            self._add_particle(x, y, vx, vy, color, size, lifetime, gravity=0)
+    
+    def emit_hit(self, x, y, count=3):
+        """Emit hit particles (ball collision)"""
+        import random
+        for _ in range(count):
+            vx = random.uniform(-1, 1)
+            vy = random.uniform(-1.5, -0.5)
+            size = random.randint(1, 3)
+            lifetime = random.randint(10, 20)
+            color = (255, 255, 255)
+            self._add_particle(x, y, vx, vy, color, size, lifetime, gravity=0.05)
+    
+    def _add_particle(self, x, y, vx, vy, color, size, lifetime, gravity):
+        """Add a particle to the system"""
+        if len(self.particles) < self.max_particles:
+            self.particles.append(Particle(x, y, vx, vy, color, size, lifetime, gravity))
+    
+    def update(self):
+        """Update all particles"""
+        for particle in self.particles:
+            particle.update()
+        # Remove dead particles
+        self.particles = [p for p in self.particles if p.alive]
+    
+    def draw(self, surface):
+        """Draw all particles"""
+        for particle in self.particles:
+            particle.draw(surface)
+    
+    def clear(self):
+        """Clear all particles"""
+        self.particles = []
+
+
+# ============================================================================
+# ETAPA 2 - BALL TRAIL EFFECT
+# ============================================================================
+
+class BallTrail:
+    """Creates a trail effect behind the ball"""
+    
+    def __init__(self, max_length=12):
+        self.positions = []
+        self.max_length = max_length
+    
+    def add_position(self, x, y):
+        """Add a new position to the trail"""
+        self.positions.append((x, y))
+        if len(self.positions) > self.max_length:
+            self.positions.pop(0)
+    
+    def draw(self, surface, color):
+        """Draw the trail with fading effect"""
+        if len(self.positions) < 2:
+            return
+        
+        for i, pos in enumerate(self.positions):
+            # Calculate alpha and size based on position in trail
+            alpha = int(120 * (i / len(self.positions)))
+            size = max(1, int(3 * (i / len(self.positions))))
+            
+            trail_surf = pygame.Surface((size * 2 + 2, size * 2 + 2), pygame.SRCALPHA)
+            trail_color = (*color[:3], alpha)
+            pygame.draw.circle(trail_surf, trail_color, (size + 1, size + 1), size)
+            surface.blit(trail_surf, (int(pos[0]) - size - 1, int(pos[1]) - size - 1))
+    
+    def clear(self):
+        """Clear the trail"""
+        self.positions = []
+
+
+# ============================================================================
+# ETAPA 2 - PARALLAX BACKGROUND
+# ============================================================================
+
+class ParallaxLayer:
+    """Single layer of a parallax background"""
+    
+    def __init__(self, width, y_offset, color, cloud_count=5, speed_factor=0.3):
+        self.width = width
+        self.y_offset = y_offset
+        self.color = color
+        self.speed_factor = speed_factor
+        self.offset_x = 0
+        self.clouds = self._generate_clouds(cloud_count)
+    
+    def _generate_clouds(self, count):
+        """Generate cloud positions"""
+        import random
+        clouds = []
+        for i in range(count):
+            x = random.randint(0, self.width)
+            w = random.randint(60, 150)
+            h = random.randint(20, 40)
+            clouds.append({'x': x, 'y': self.y_offset + random.randint(-20, 20), 
+                          'w': w, 'h': h, 'alpha': random.randint(20, 50)})
+        return clouds
+    
+    def update(self, camera_offset=0):
+        """Update layer position based on camera"""
+        self.offset_x = -camera_offset * self.speed_factor
+    
+    def draw(self, surface):
+        """Draw the layer"""
+        for cloud in self.clouds:
+            x = (cloud['x'] + self.offset_x) % self.width
+            
+            cloud_surf = pygame.Surface((cloud['w'], cloud['h']), pygame.SRCALPHA)
+            cloud_color = (*self.color, cloud['alpha'])
+            pygame.draw.ellipse(cloud_surf, cloud_color, (0, 0, cloud['w'], cloud['h']))
+            surface.blit(cloud_surf, (x, cloud['y']))
+
+
+class ParallaxBackground:
+    """Multi-layer parallax background system"""
+    
+    def __init__(self, width, height):
+        self.width = width
+        self.height = height
+        
+        # Create 3 layers: far clouds, mid clouds, near details
+        self.layers = [
+            ParallaxLayer(width, 50, (255, 255, 255), cloud_count=4, speed_factor=0.1),
+            ParallaxLayer(width, 100, (230, 240, 250), cloud_count=5, speed_factor=0.2),
+            ParallaxLayer(width, 150, (200, 220, 240), cloud_count=3, speed_factor=0.35),
+        ]
+        
+        # Floating animation for clouds
+        self.time = 0
+    
+    def update(self, camera_offset=0):
+        """Update parallax layers"""
+        self.time += 0.02
+        for layer in self.layers:
+            layer.update(camera_offset)
+    
+    def draw(self, surface):
+        """Draw all parallax layers"""
+        for layer in self.layers:
+            layer.draw(surface)
+
+
+# ============================================================================
 # INITIALIZATION
 # ============================================================================
 
@@ -499,5 +732,7 @@ __all__ = [
     'draw_rounded_rect', 'create_gradient_surface', 'create_vignette',
     'draw_shadow', 'draw_ball_shadow', 'draw_ball_premium',
     'GlassCard', 'HUDCard', 'ModernButton', 'PremiumBackground',
+    'Particle', 'ParticleSystem', 'BallTrail', 'ParallaxLayer', 'ParallaxBackground',
     'init_ui'
 ]
+

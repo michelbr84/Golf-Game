@@ -101,21 +101,22 @@ Este documento rastreia o estado atual do jogo e todas as melhorias planejadas p
 
 ## 🚧 Próximas Etapas
 
-### 🌟 Etapa 2 - "Premium" (Polish Visual)
+## 🔄 Etapa 2 - "Premium" (Polish Visual) - EM PROGRESSO
+
+### ✅ Implementado
 
 #### 2.1 Parallax no Cenário
-- [ ] Separar background em 3 camadas:
-  - Nuvens (movimento bem lento)
-  - Montanhas (movimento médio)
-  - Arbustos/vegetação (movimento rápido)
-- [ ] Micro-animação nas nuvens (flutuação sutil)
-- [ ] Gradiente shifting sutil (luz dinâmica)
+- [x] Sistema de 3 camadas de nuvens
+- [x] Velocidades diferentes por camada
+- [x] Nuvens semi-transparentes
 
 #### 2.2 Partículas
-- [ ] Poeira ao bater em superfícies
-- [ ] Splash na água (gotas)
-- [ ] Sparkle ao coletar moeda
-- [ ] Trail sutil da bola em movimento rápido
+- [x] Sistema de partículas genérico (`ParticleSystem`)
+- [x] Splash na água (gotas azuis)
+- [x] Sparkle ao coletar moeda (dourado)
+- [x] Trail da bola em movimento (`BallTrail`)
+
+### ⏳ Pendente
 
 #### 2.3 Bola Premium (Avançado)
 - [ ] Trail/rastro quando acelera

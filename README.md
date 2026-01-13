@@ -162,10 +162,13 @@ O projeto está passando por uma grande atualização visual e de UX. Consulte o
 - [x] Vinheta nas bordas da tela
 - [x] Loja modernizada com cards e botões pill
 
-### 🔄 Etapa 2 - Polish Visual (Em Andamento)
-- [ ] Sistema de parallax (3 camadas)
-- [ ] Sistema de partículas (poeira, splash)
-- [ ] Trail da bola em movimento
+### 🔄 Etapa 2 - Polish Visual (EM PROGRESSO)
+- [x] Sistema de parallax (3 camadas de nuvens)
+- [x] Sistema de partículas (ParticleSystem)
+- [x] Splash de água com partículas
+- [x] Sparkle ao coletar moedas
+- [x] Trail da bola em movimento
+- [ ] Poeira ao bater em superfícies
 - [ ] Botões com estados hover/pressed
 
 ### ⏳ Etapa 3 - Apple Arcade Vibe
