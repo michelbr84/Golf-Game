@@ -522,7 +522,7 @@ def endScreen(): # Display this screen when the user completes trhe course
 
             if event.type == pygame.QUIT:
                 pygame.quit()
-                break
+                sys.exit()
 
 
 
@@ -971,7 +971,7 @@ while starting:
 
         if event.type == pygame.QUIT:
             pygame.quit()
-            break
+            sys.exit()
 
 # Game Loop for levels and collision
 while True:

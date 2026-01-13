@@ -195,7 +195,7 @@ def drawShop(pos=None, click=False):
     surf.blit(vignette_overlay, (0, 0))
     
     # Title
-    shop_title = font_large.render('BALL SHOP', True, Colors.TEXT_PRIMARY)
+    shop_title = Fonts.UI_LARGE.render('BALL SHOP', True, Colors.TEXT_PRIMARY)
     surf.blit(shop_title, (540 - shop_title.get_width() // 2, 15))
     
     # Back button (pill style)
@@ -287,12 +287,12 @@ def mainScreen(hover=False):
     # SEED MODE Button (top left)
     # Using a modern pill button
     seed_btn_color = Colors.ACCENT_GREEN
-    draw_shadow(surf, (15, 8, 140, 36), 18, (2, 2), 2)
-    draw_rounded_rect(surf, seed_btn_color, (15, 8, 140, 36), 18)
+    draw_shadow(surf, (15, 60, 140, 36), 18, (2, 2), 2)
+    draw_rounded_rect(surf, seed_btn_color, (15, 60, 140, 36), 18)
     seed_text = font_small.render('SEED MODE', True, (255, 255, 255))
-    text_rect = seed_text.get_rect(center=(15 + 70, 8 + 18))
+    text_rect = seed_text.get_rect(center=(15 + 70, 60 + 18))
     surf.blit(seed_text, text_rect)
-    seedButton = pygame.Rect(15, 8, 140, 36)
+    seedButton = pygame.Rect(15, 60, 140, 36)
     
     # Course Card with glass effect
     i = buttons[0]
