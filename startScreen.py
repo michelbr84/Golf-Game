@@ -125,7 +125,7 @@ def change_user():
 
     
 def drawShop(pos=None, click=False):
-    global ballObjects
+    global ballObjects, surfaces
     pygame.time.delay(20)
 
     if pos != None:
@@ -197,6 +197,7 @@ def drawShop(pos=None, click=False):
     # Use profiles to get ball list
     ball_data = profiles.get_balls()
     ballObjects = [] # Rebuild locally
+    surfaces = []    # Clear surfaces to sync with ballObjects
     
     for b_info in ball_data:
         color_str = b_info["color"]
