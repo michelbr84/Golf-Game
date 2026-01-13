@@ -113,6 +113,7 @@ Golf-Game/
 ├── physics.py           # Sistema de física
 ├── courses.py           # Definição dos 9 níveis
 ├── startScreen.py       # Tela inicial e loja
+├── ui_style.py          # Sistema de UI premium (cores, fontes, componentes)
 ├── scores.txt           # Salvamento de progresso
 ├── ToDo.md              # Tracker de features e melhorias
 ├── README.md            # Este arquivo
@@ -152,21 +153,22 @@ Golf-Game/
 
 O projeto está passando por uma grande atualização visual e de UX. Consulte o arquivo **[ToDo.md](ToDo.md)** para detalhes completos.
 
-### Próximas Melhorias Planejadas
+### ✅ Etapa 1 - Base Visual (CONCLUÍDA)
+- [x] Tipografia premium (substituiu Comic Sans por fontes modernas)
+- [x] HUD moderno com cards glassmorphism
+- [x] Gradientes no céu e cenário
+- [x] Sombras em todos os elementos
+- [x] Bola premium com highlight e sombra
+- [x] Vinheta nas bordas da tela
+- [x] Loja modernizada com cards e botões pill
 
-#### 🎨 Etapa 1 - Base Visual
-- [ ] Tipografia premium (substituir Comic Sans)
-- [ ] HUD moderno com cards glassmorphism
-- [ ] Gradientes no céu e cenário
-- [ ] Sombras em todos os elementos
-
-#### 🌟 Etapa 2 - Polish Visual
+### 🔄 Etapa 2 - Polish Visual (Em Andamento)
 - [ ] Sistema de parallax (3 camadas)
 - [ ] Sistema de partículas (poeira, splash)
-- [ ] Bola premium (highlight, sombra, trail)
-- [ ] Botões modernos estilo pill
+- [ ] Trail da bola em movimento
+- [ ] Botões com estados hover/pressed
 
-#### ✨ Etapa 3 - Apple Arcade Vibe
+### ⏳ Etapa 3 - Apple Arcade Vibe
 - [ ] Texturas de materiais (metal, madeira, pedra)
 - [ ] Animações sutis de UI
 - [ ] Transições entre telas

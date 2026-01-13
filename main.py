@@ -496,9 +496,23 @@ def showScore():  # Display the score from class scoreSheet
 
 
 def holeInOne():  # If player gets a hole in one display special mesage to screen
-    text = myFont.render('Hole in One!', 1, (255,255,255))
+    # Create text with shadow for readability
+    message = 'Hole in One!'
+    
+    # Shadow text (dark outline)
+    shadow_font = pygame.font.SysFont('Arial', 48, bold=True)
+    shadow = shadow_font.render(message, True, (0, 0, 0))
+    text = shadow_font.render(message, True, (255, 255, 255))
+    
     x = (winwidth / 2) - (text.get_width() / 2)
     y = (winheight / 2) - (text.get_height() / 2)
+    
+    # Draw shadow offset
+    win.blit(shadow, (x + 2, y + 2))
+    win.blit(shadow, (x - 2, y + 2))
+    win.blit(shadow, (x + 2, y - 2))
+    win.blit(shadow, (x - 2, y - 2))
+    # Draw main text
     win.blit(text, (x, y))
     pygame.display.update()
     showScore()
@@ -506,28 +520,41 @@ def holeInOne():  # If player gets a hole in one display special mesage to scree
 
 def displayScore(stroke, par):  # Using proper golf terminology display score
     if stroke == 0:
-        text = 'Skipped'
+        message = 'Skipped'
     elif stroke == par - 4:
-        text = '-4 !'
+        message = '-4 !'
     elif stroke == par - 3:
-        text = 'Albatross!'
+        message = 'Albatross!'
     elif stroke == par - 2:
-        text = 'Eagle!'
+        message = 'Eagle!'
     elif stroke == par - 1:
-        text = 'Birdie!'
+        message = 'Birdie!'
     elif stroke == par:
-        text = 'Par'
+        message = 'Par'
     elif stroke == par + 1:
-        text = 'Bogey :('
+        message = 'Bogey'
     elif stroke == par + 2:
-        text = 'Double Bogey :('
+        message = 'Double Bogey'
     elif stroke == par + 3:
-        text = 'Triple Bogey :('
+        message = 'Triple Bogey'
     else:
-        text = '+ ' + str(stroke - par) + ' :('
+        message = '+' + str(stroke - par)
 
-    label = myFont.render(text, 1, (255,255,255))
-    win.blit(label, ((winwidth//2) - (label.get_width() // 2), (winheight//2) - (label.get_height()//2)))
+    # Create text with shadow for readability
+    display_font = pygame.font.SysFont('Arial', 48, bold=True)
+    shadow = display_font.render(message, True, (0, 0, 0))
+    label = display_font.render(message, True, (255, 255, 255))
+    
+    x = (winwidth // 2) - (label.get_width() // 2)
+    y = (winheight // 2) - (label.get_height() // 2)
+    
+    # Draw shadow (outline effect)
+    win.blit(shadow, (x + 2, y + 2))
+    win.blit(shadow, (x - 2, y + 2))
+    win.blit(shadow, (x + 2, y - 2))
+    win.blit(shadow, (x - 2, y - 2))
+    # Draw main text
+    win.blit(label, (x, y))
     pygame.display.update()
 
     showScore()
@@ -999,10 +1026,18 @@ while True:
 
             for i in objects:  # for every object in the level
                 if i[4] == 'coin':  # If the ball hits a coin
-                    if i[5]:
-                        if ballCords[0] < i[0] + i[2] and ballCords[0] > i[0] and ballCords[1] > i[1] and ballCords[1] < i[1] + i[3]:
+                    if len(i) > 5 and i[5]:  # Check if coin exists and is visible
+                        # Larger hitbox for easier collection (coin is 32x32)
+                        coin_x, coin_y = i[0], i[1]
+                        coin_w, coin_h = i[2], i[3]
+                        ball_x, ball_y = ballCords[0], ballCords[1]
+                        
+                        # Expanded collision area for easier pickup
+                        if (ball_x > coin_x - 10 and ball_x < coin_x + coin_w + 10 and 
+                            ball_y > coin_y - 10 and ball_y < coin_y + coin_h + 10):
                             if SOUND:
                                 puttSound.play()  # Use putt sound for coin collection
+                            i[5] = False  # Directly disable the coin
                             courses.coinHit(level - 1)
                             coins += 1
 
@@ -1022,8 +1057,18 @@ while True:
                         shoot = False
                         strokes += 1
 
-                        label = myFont.render('Laser Hazard, +1 stroke', 1, (255, 255, 255))
-                        win.blit(label, (winwidth / 2 - label.get_width() / 2, winheight / 2 - label.get_height() / 2))
+                        # Display message with shadow for readability
+                        hazard_font = pygame.font.SysFont('Arial', 36, bold=True)
+                        msg = 'Laser Hazard +1'
+                        shadow = hazard_font.render(msg, True, (0, 0, 0))
+                        label = hazard_font.render(msg, True, (255, 255, 255))
+                        x = winwidth / 2 - label.get_width() / 2
+                        y = winheight / 2 - label.get_height() / 2
+                        win.blit(shadow, (x + 2, y + 2))
+                        win.blit(shadow, (x - 2, y + 2))
+                        win.blit(shadow, (x + 2, y - 2))
+                        win.blit(shadow, (x - 2, y - 2))
+                        win.blit(label, (x, y))
                         pygame.display.update()
                         pygame.time.delay(1000)
                         ballColor = (255,255,255)
@@ -1047,10 +1092,20 @@ while True:
                         shoot = False
                         strokes += 1
 
-                        label = myFont.render('Water Hazard, +1 stroke', 1, (255, 255, 255))
+                        # Display message with shadow for readability
+                        hazard_font = pygame.font.SysFont('Arial', 36, bold=True)
+                        msg = 'Water Hazard +1'
+                        shadow = hazard_font.render(msg, True, (0, 0, 0))
+                        label = hazard_font.render(msg, True, (255, 255, 255))
                         if SOUND:
                             splash.play()
-                        win.blit(label, (winwidth / 2 - label.get_width() / 2, winheight / 2 - label.get_height() / 2))
+                        x = winwidth / 2 - label.get_width() / 2
+                        y = winheight / 2 - label.get_height() / 2
+                        win.blit(shadow, (x + 2, y + 2))
+                        win.blit(shadow, (x - 2, y + 2))
+                        win.blit(shadow, (x + 2, y - 2))
+                        win.blit(shadow, (x - 2, y - 2))
+                        win.blit(label, (x, y))
                         pygame.display.update()
                         pygame.time.delay(1500)
                         ballColor = (255,255,255)
