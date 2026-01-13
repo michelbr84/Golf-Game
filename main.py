@@ -189,12 +189,17 @@ class scoreSheet():
     def getStrokes(self):
         return sum(self.strokes)
 
-    def drawSheet(self, score=0):
+    def drawSheet(self, score=0, coins_collected=0):
         self.strokes.append(score)
         grey = (220, 220, 220)
 
         text = self.bigFont.render('Strokes: ' + str(sum(self.strokes)), 1, grey)
         self.win.blit(text, (800, 330))
+        
+        # Display Coins Collected
+        coin_text = self.font.render(f'Coins this level: {coins_collected}', 1, (255, 215, 0)) # Gold color
+        self.win.blit(coin_text, (800, 370))
+        
         text = self.bigFont.render('Par: ' + str(self.par), 1, grey)
         self.win.blit(text, (240 - (text.get_width()/2), 300 - (text.get_height()/2)))
         text = self.bigFont.render('Score: ', 1, grey)
@@ -530,7 +535,8 @@ def endScreen(): # Display this screen when the user completes trhe course
 
 
 def setup(level):  # Setup objects for the level from module courses
-    global line, par, hole, power, ballStationary, objects, ballColor, stickyPower, superPower, mullagain
+    global line, par, hole, power, ballStationary, objects, ballColor, stickyPower, superPower, mullagain, start_coins, coins
+    start_coins = coins
     ballColor = (255,255,255)
     stickyPower = False
     superPower = False
@@ -571,10 +577,15 @@ def fade():  # Fade out screen when player gets ball in hole
 
 
 def showScore():  # Display the score from class scoreSheet
-    global level
+    global level, coins, start_coins
     sleep(2)
     level += 1
-    sheet.drawSheet(strokes)
+    
+    # Calculate coins collected this level
+    coins_collected = coins - start_coins
+    if coins_collected < 0: coins_collected = 0
+    
+    sheet.drawSheet(strokes, coins_collected)
     pygame.display.update()
     go = True
     while go:  # Wait until user clicks until we move to next level
@@ -1209,7 +1220,7 @@ while True:
                             if SOUND:
                                 puttSound.play()  # Use putt sound for coin collection
                             i[5] = False  # Directly disable the coin
-                            courses.coinHit(level - 1)
+                            # courses.coinHit(level - 1) - Removed to fix bug where all coins disappear
                             coins += 1
                             # ETAPA 2 - Sparkle effect on coin collect
                             particle_system.emit_sparkle(coin_x + 16, coin_y + 16)
