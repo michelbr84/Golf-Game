@@ -27,9 +27,10 @@ font = Fonts.UI_MEDIUM
 font_large = Fonts.TITLE_SMALL
 font_small = Fonts.UI_SMALL
 
-buttons = [[1080/2 - course1.get_width()/2, 260, course1.get_width(), course1.get_height(), 'Grassy Land']]
-shopButton = []
-seedButton = []
+buttons = [[440, 240, 200, 200, 'Grassy Land']]  # [x, y, width, height, name]
+shopButton = [15, 525, 200, 60]
+seedButton = [15, 60, 200, 50]
+logoutButton = [900, 20, 160, 40] # Top Right
 ballObjects = []
 surfaces = []
 
@@ -43,23 +44,14 @@ class ball():
         self.font = Fonts.UI_SMALL
 
     def unlock(self):
-        file = open('scores.txt', 'r')
-        f = file.readlines()
-        file.close()
-
-        file = open('scores.txt', 'w')
-        for line in f:
-            if line.find(self.original) != -1:
-                file.write(self.original + '-' + 'True\n')
-            else:
-                file.write(line)
-        
+        profiles.unlock_ball(self.original)
         self.locked = False
 
     def getLocked(self):
         return self.locked
 
     def equip(self):
+        profiles.equip_ball(self.original)
         self.equipped = True
 
     def getEquip(self):
@@ -122,22 +114,14 @@ class ball():
 
 
 def getBest():
-    file = open('scores.txt', 'r')
-    for line in file:
-        l = line.split()
-        if l[0] == 'score':
-            file.close()
-            return l[1].strip()
-    return 0
-    file.close()
+    return profiles.get_best_score()
 
 def getCoins():
-    file = open('scores.txt', 'r')
-    for line in file:
-        l = line.split()
-        if l[0] == 'coins':
-            file.close()
-            return l[1].strip()
+    return profiles.get_coins()
+
+def change_user():
+     profiles.logout()
+     login()
 
     
 def drawShop(pos=None, click=False):
@@ -157,18 +141,9 @@ def drawShop(pos=None, click=False):
                             if messagebox.askyesno('Confirm Purchase?', 'Are you sure you would like to purchase this new ball for 10 coins?'):
                                 if int(getCoins()) >= 10:
                                     ballObjects[c].unlock()
-                                    oldCoins = int(getCoins())
-                                    file = open('scores.txt', 'r')
-                                    f = file.readlines()
-
-                                    file = open('scores.txt', 'w')
-                                    for line in f:
-                                        l = line.split()
-                                        if l[0] == 'coins':
-                                            file.write('coins ' + str(oldCoins - 10)+ '\n')
-                                        else:
-                                            file.write(line)
-                                    file.close()
+                                    ballObjects[c].unlock()
+                                    profiles.add_coins(-10) # Deduct coins
+                                    # oldCoins = int(getCoins())
                                 else:
                                     messagebox.showerror('Not enough coins!', 'You do not have enough coins to purchase this item!')
                 
@@ -215,37 +190,42 @@ def drawShop(pos=None, click=False):
     count = 0
     c = 0
     xVal = 0
-    file = open('scores.txt', 'r')
-    for line in file:
-        if line.find('True') != -1 or line.find('False') != -1:
-            count += 1
-            l = line.split('-')
-            color = l[0]
-            color = color.split(',')
-            newList = []
+    count = 0
+    c = 0
+    xVal = 0
+    
+    # Use profiles to get ball list
+    ball_data = profiles.get_balls()
+    ballObjects = [] # Rebuild locally
+    
+    for b_info in ball_data:
+        color_str = b_info["color"]
+        is_locked = b_info["locked"]
+        is_equipped = b_info["equipped"]
+        
+        # Convert "r,g,b" to tuple
+        parts = color_str.split(',')
+        color_tuple = tuple(map(int, parts))
+        
+        # Create ball object
+        obj = ball(color_tuple, is_locked, color_str)
+        if is_equipped:
+            obj.equipped = True
             
-            for num in color:
-                newList.append(int(num))
-            if len(ballObjects) <= 15:
-                if l[1].strip() == 'True':
-                    obj = ball(tuple(newList), False, l[0])
-                else:
-                    obj = ball(tuple(newList), True, l[0])
-
-                if len(ballObjects) == 0:
-                    obj.equip()
-            else:
-                obj = ballObjects[c]
-
-            s = obj.getSurf()
-            surf.blit(s, ((200 * count) - 150, 50 + (xVal * 160)))
-            surfaces.append([(200 * count) - 150, 50 + (xVal * 160), 160, 125])
-            ballObjects.append(obj)
-            if count % 5 == 0:
-                xVal = xVal + 1
-                count = 0
-            c = c + 1
-    file.close()
+        if len(ballObjects) <= 15:
+             # Just safety cap
+             pass
+             
+        s = obj.getSurf()
+        surf.blit(s, ((200 * count) - 150, 50 + (xVal * 160)))
+        surfaces.append([(200 * count) - 150, 50 + (xVal * 160), 160, 125])
+        ballObjects.append(obj)
+        
+        count += 1
+        if count % 5 == 0:
+            xVal = xVal + 1
+            count = 0
+        c = c + 1
 
 
     
@@ -263,6 +243,9 @@ def getBallColor():
 
 def mainScreen(hover=False):
     global shopButton, seedButton
+    # Ensure shopButton is correct
+    shopButton = [15, 525, 200, 60]
+    
     surf = pygame.Surface((1080, 600))
     w = title.get_width()
     h = title.get_height()
@@ -277,13 +260,25 @@ def mainScreen(hover=False):
     # Title
     surf.blit(title, ((1080/2 - (w/2)), 50))
     
-    # Shop Button (pill style)
+    # Shop Button (Bottom Left)
+    # Using a modern pill button
     shop_btn_color = Colors.ACCENT_PURPLE if hover else Colors.ACCENT_BLUE
-    draw_shadow(surf, (925, 8, 140, 36), 18, (2, 2), 2)
-    draw_rounded_rect(surf, shop_btn_color, (925, 8, 140, 36), 18)
+    # Coords: (15, 525, 200, 60) matching hitbox
+    draw_shadow(surf, (15, 525, 200, 60), 18, (2, 2), 2)
+    draw_rounded_rect(surf, shop_btn_color, (15, 525, 200, 60), 18)
     shop_text = font_small.render('SHOP', True, (255, 255, 255))
-    surf.blit(shop_text, (970, 14))
-    shopButton = pygame.Rect(925, 8, 140, 36)
+    text_rect = shop_text.get_rect(center=(15 + 100, 525 + 30))
+    surf.blit(shop_text, text_rect)
+    # shopButton = [15, 525, 200, 60] # Managed by global/local fix
+
+    # LOGOUT Button (Top Right)
+    # Coords: (900, 20, 160, 40) matching hitbox
+    logout_btn_color = (220, 38, 38) # Red
+    draw_shadow(surf, (900, 20, 160, 40), 12, (2, 2), 2)
+    draw_rounded_rect(surf, logout_btn_color, (900, 20, 160, 40), 12)
+    logout_text = font_small.render('LOGOUT', True, (255, 255, 255))
+    l_rect = logout_text.get_rect(center=(900 + 80, 20 + 20))
+    surf.blit(logout_text, l_rect)
     
     # SEED MODE Button (top left)
     # Using a modern pill button
@@ -348,10 +343,13 @@ def mouseOver(larger=False):
 
 
 def shopClick(pos):
-    global shopButton
-    i = shopButton
-    if pos[0] > i[0] and pos[0] < i[0] + i[2]:
-        if pos[1] > i[1] and pos[1] < i[1] + i[3]:
+    # FORCE CORRECT COORDINATES (Bottom Left)
+    # [15, 525, 200, 60]
+    shop_rect = [15, 525, 200, 60] 
+    
+    # print(f"[DEBUG] shopClick checking pos={pos} against shop_rect={shop_rect}")
+    if pos[0] > shop_rect[0] and pos[0] < shop_rect[0] + shop_rect[2]:
+        if pos[1] > shop_rect[1] and pos[1] < shop_rect[1] + shop_rect[3]:
             return True
     return False
 
@@ -369,6 +367,17 @@ def seedClick(pos):
                 seed = simpledialog.askstring("Seed Mode", "Enter a seed for procedural generation:\n(Leave empty to cancel)")
                 root.destroy()
                 return seed
+    return False
+
+def logoutClick(pos):
+    # FORCE CORRECT COORDINATES (Top Right)
+    # [900, 20, 160, 40]
+    logout_rect = [900, 20, 160, 40]
+    
+    # print(f"[DEBUG] logoutClick checking pos={pos} against logout_rect={logout_rect}")
+    if pos[0] > logout_rect[0] and pos[0] < logout_rect[0] + logout_rect[2]:
+        if pos[1] > logout_rect[1] and pos[1] < logout_rect[1] + logout_rect[3]:
+            return True
     return False
 
 
