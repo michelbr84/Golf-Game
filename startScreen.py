@@ -29,8 +29,14 @@ font_small = Fonts.UI_SMALL
 
 buttons = [[440, 240, 200, 200, 'Grassy Land']]  # [x, y, width, height, name]
 shopButton = [15, 525, 200, 60]
-seedButton = [15, 60, 200, 50]
+seedButton = [15, 60, 140, 36]
 logoutButton = [900, 20, 160, 40] # Top Right
+# ETAPA 5 - New menu buttons
+settingsButton = [240, 525, 140, 60]
+multiplayerButton = [400, 525, 180, 60]
+editorButton = [600, 525, 160, 60]
+dailyButton = [15, 105, 140, 36]
+achievementsButton = [780, 525, 180, 60]
 ballObjects = []
 surfaces = []
 
@@ -285,7 +291,6 @@ def mainScreen(hover=False):
     surf.blit(logout_text, l_rect)
     
     # SEED MODE Button (top left)
-    # Using a modern pill button
     seed_btn_color = Colors.ACCENT_GREEN
     draw_shadow(surf, (15, 60, 140, 36), 18, (2, 2), 2)
     draw_rounded_rect(surf, seed_btn_color, (15, 60, 140, 36), 18)
@@ -293,7 +298,43 @@ def mainScreen(hover=False):
     text_rect = seed_text.get_rect(center=(15 + 70, 60 + 18))
     surf.blit(seed_text, text_rect)
     seedButton = pygame.Rect(15, 60, 140, 36)
-    
+
+    # DAILY CHALLENGE Button (below seed)
+    daily_color = Colors.ACCENT_ORANGE
+    draw_shadow(surf, (15, 105, 140, 36), 18, (2, 2), 2)
+    draw_rounded_rect(surf, daily_color, (15, 105, 140, 36), 18)
+    daily_text = font_small.render('DAILY', True, (255, 255, 255))
+    text_rect = daily_text.get_rect(center=(15 + 70, 105 + 18))
+    surf.blit(daily_text, text_rect)
+
+    # SETTINGS Button (bottom row)
+    draw_shadow(surf, (240, 525, 140, 60), 18, (2, 2), 2)
+    draw_rounded_rect(surf, (100, 116, 139), (240, 525, 140, 60), 18)
+    settings_text = font_small.render('SETTINGS', True, (255, 255, 255))
+    text_rect = settings_text.get_rect(center=(240 + 70, 525 + 30))
+    surf.blit(settings_text, text_rect)
+
+    # MULTIPLAYER Button (bottom row)
+    draw_shadow(surf, (400, 525, 180, 60), 18, (2, 2), 2)
+    draw_rounded_rect(surf, Colors.ACCENT_PURPLE, (400, 525, 180, 60), 18)
+    mp_text = font_small.render('MULTIPLAYER', True, (255, 255, 255))
+    text_rect = mp_text.get_rect(center=(400 + 90, 525 + 30))
+    surf.blit(mp_text, text_rect)
+
+    # EDITOR Button (bottom row)
+    draw_shadow(surf, (600, 525, 160, 60), 18, (2, 2), 2)
+    draw_rounded_rect(surf, Colors.ACCENT_GREEN, (600, 525, 160, 60), 18)
+    ed_text = font_small.render('EDITOR', True, (255, 255, 255))
+    text_rect = ed_text.get_rect(center=(600 + 80, 525 + 30))
+    surf.blit(ed_text, text_rect)
+
+    # ACHIEVEMENTS Button (bottom row)
+    draw_shadow(surf, (780, 525, 180, 60), 18, (2, 2), 2)
+    draw_rounded_rect(surf, Colors.ACCENT_GOLD, (780, 525, 180, 60), 18)
+    ach_text = font_small.render('TROPHIES', True, (255, 255, 255))
+    text_rect = ach_text.get_rect(center=(780 + 90, 525 + 30))
+    surf.blit(ach_text, text_rect)
+
     # Course Card with glass effect
     i = buttons[0]
     draw_shadow(surf, (i[0] - 15, i[1] - 10, i[2] + 30, i[3] + 90), 20, (4, 4), 3)
@@ -318,12 +359,12 @@ def mainScreen(hover=False):
     coin_text = font_small.render(str(coins_val), True, Colors.TEXT_PRIMARY)
     surf.blit(coin_text, (85, 14))
     
-    # Play hint at bottom
+    # Play hint above course card
     hint_text = Fonts.UI_TINY.render('Click the course to play!', True, Colors.TEXT_SECONDARY)
     hint_bg = pygame.Surface((hint_text.get_width() + 20, hint_text.get_height() + 10), pygame.SRCALPHA)
     draw_rounded_rect(hint_bg, (0, 0, 0, 30), (0, 0, hint_text.get_width() + 20, hint_text.get_height() + 10), 8)
-    surf.blit(hint_bg, (540 - hint_text.get_width() // 2 - 10, 565))
-    surf.blit(hint_text, (540 - hint_text.get_width() // 2, 570))
+    surf.blit(hint_bg, (540 - hint_text.get_width() // 2 - 10, 495))
+    surf.blit(hint_text, (540 - hint_text.get_width() // 2, 500))
     
     win.blit(surf, (0,0))
     pygame.display.update()
@@ -386,64 +427,72 @@ def logoutClick(pos):
 
 
 def login():
-    """Prompt user for login name"""
-    root = tk.Tk()
-    root.withdraw()
-    root.attributes("-topmost", True)
-    
-    # Custom dialog style could be better, but simpledialog is robust
-    name = simpledialog.askstring("Welcome to Golf Game", "Enter your Player Name:")
-    
-    root.destroy()
-    
+    """Prompt user for login name. Tries tkinter dialog; falls back to pygame text input."""
+    name = None
+    try:
+        root = tk.Tk()
+        root.withdraw()
+        root.attributes("-topmost", True)
+        name = simpledialog.askstring("Welcome to Golf Game", "Enter your Player Name:")
+        root.destroy()
+    except Exception:
+        # Pygame text input fallback
+        input_font = pygame.font.SysFont('Arial', 28)
+        label_font = pygame.font.SysFont('Arial', 20)
+        user_text = ""
+        active = True
+        clock = pygame.time.Clock()
+        while active:
+            clock.tick(60)
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    import sys; sys.exit()
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_RETURN:
+                        active = False
+                    elif event.key == pygame.K_BACKSPACE:
+                        user_text = user_text[:-1]
+                    else:
+                        if len(user_text) < 24:
+                            user_text += event.unicode
+            # Draw input UI
+            win.fill((30, 30, 40))
+            label = label_font.render("Enter your Player Name and press Enter:", True, (200, 200, 200))
+            win.blit(label, (win.get_width() // 2 - label.get_width() // 2, 230))
+            box_rect = pygame.Rect(win.get_width() // 2 - 150, 270, 300, 44)
+            pygame.draw.rect(win, (255, 255, 255), box_rect, border_radius=8)
+            text_surf = input_font.render(user_text, True, (20, 20, 20))
+            win.blit(text_surf, (box_rect.x + 10, box_rect.y + 8))
+            hint = label_font.render("Press Enter to confirm", True, (140, 140, 140))
+            win.blit(hint, (win.get_width() // 2 - hint.get_width() // 2, 325))
+            pygame.display.update()
+        name = user_text
+
     if not name or name.strip() == "":
         name = "Player"
-        
+
     profiles.login(name)
     return name
 
+def _hit(pos, rect):
+    """Check if pos is inside [x, y, w, h] rect."""
+    return rect[0] < pos[0] < rect[0] + rect[2] and rect[1] < pos[1] < rect[1] + rect[3]
 
-def init_shop_defaults():
-    """Initialize default balls if scores.txt is missing/empty"""
-    defaults = [
-        "255,255,255-True", # White (Unlocked)
-        "255,0,0-False",
-        "0,255,0-False",
-        "0,0,255-False",
-        "255,255,0-False",
-        "255,0,255-False",
-        "0,255,255-False",
-        "192,192,192-False",
-        "128,128,128-False",
-        "128,0,0-False",
-        "128,128,0-False",
-        "0,128,0-False",
-        "128,0,128-False",
-        "0,128,128-False",
-        "0,0,128-False",
-        "255,165,0-False"
-    ]
-    
-    existing = ""
-    if os.path.exists('scores.txt'):
-         try:
-             with open('scores.txt', 'r') as f:
-                 existing = f.read()
-         except:
-             pass
-             
-    if 'True' not in existing and 'False' not in existing:
-        try:
-            with open('scores.txt', 'a') as f:
-                if len(existing) > 0 and not existing.endswith('\n'):
-                    f.write('\n')
-                for d in defaults:
-                    f.write(d + '\n')
-        except:
-            pass
+def settingsClick(pos):
+    return _hit(pos, settingsButton)
 
-# Initialize defaults on load
-init_shop_defaults()
+def multiplayerClick(pos):
+    return _hit(pos, multiplayerButton)
+
+def editorClick(pos):
+    return _hit(pos, editorButton)
+
+def dailyClick(pos):
+    return _hit(pos, dailyButton)
+
+def achievementsClick(pos):
+    return _hit(pos, achievementsButton)
 
 def click(pos):
     for i in buttons:

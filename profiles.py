@@ -1,5 +1,6 @@
 import json
 import os
+import datetime
 
 PROFILE_FILE = "profiles.json"
 
@@ -60,6 +61,9 @@ def login(username):
     if "best_score" not in profile_data[current_user]: profile_data[current_user]["best_score"] = 999
     if "unlocked_balls" not in profile_data[current_user]: profile_data[current_user]["unlocked_balls"] = ["255,255,255"]
     if "equipped_ball" not in profile_data[current_user]: profile_data[current_user]["equipped_ball"] = "255,255,255"
+    if "daily_scores" not in profile_data[current_user]: profile_data[current_user]["daily_scores"] = {}
+    if "achievements" not in profile_data[current_user]: profile_data[current_user]["achievements"] = []
+    if "settings" not in profile_data[current_user]: profile_data[current_user]["settings"] = {}
 
 def logout():
     global current_user
@@ -121,20 +125,124 @@ def get_equipped_ball():
              return "255,255,255"
     return "255,255,255"
 
+# ============================================================================
+# ACHIEVEMENT PERSISTENCE HELPERS
+# ============================================================================
+
+def get_achievements():
+    """Return set of unlocked achievement IDs for current user."""
+    if current_user and current_user in profile_data:
+        return set(profile_data[current_user].get("achievements", []))
+    return set()
+
+def unlock_achievement(achievement_id):
+    """
+    Unlock an achievement for the current user.
+    Returns True if it was newly unlocked, False if already unlocked or no user.
+    """
+    if not (current_user and current_user in profile_data):
+        return False
+    if "achievements" not in profile_data[current_user]:
+        profile_data[current_user]["achievements"] = []
+    if achievement_id not in profile_data[current_user]["achievements"]:
+        profile_data[current_user]["achievements"].append(achievement_id)
+        save_data()
+        return True
+    return False
+
+def is_achievement_unlocked(achievement_id):
+    """Return True if the achievement has been unlocked for the current user."""
+    return achievement_id in get_achievements()
+
+
 def get_balls():
     """Returns list of dicts for UI: {color: str, locked: bool, equipped: bool}"""
     balls = []
     equipped = get_equipped_ball()
-    
+
     for b in DEFAULT_BALLS:
         is_locked = not is_ball_unlocked(b)
         is_equipped = (b == equipped)
         # Force white unlock if bugged
         if b == "255,255,255": is_locked = False
-        
+
         balls.append({
             "color": b,
             "locked": is_locked,
             "equipped": is_equipped
         })
     return balls
+
+
+# ============================================================================
+# DAILY CHALLENGE
+# ============================================================================
+
+def get_daily_seed():
+    """Returns the seed string for today's daily challenge."""
+    return f"daily-{datetime.date.today().isoformat()}"
+
+def save_daily_score(score):
+    """Save the score for today's daily challenge."""
+    if current_user and current_user in profile_data:
+        seed = get_daily_seed()
+        if "daily_scores" not in profile_data[current_user]:
+            profile_data[current_user]["daily_scores"] = {}
+        profile_data[current_user]["daily_scores"][seed] = score
+        save_data()
+
+def get_daily_score():
+    """Returns today's daily challenge score, or None if not played."""
+    if current_user and current_user in profile_data:
+        seed = get_daily_seed()
+        return profile_data[current_user].get("daily_scores", {}).get(seed, None)
+    return None
+
+def has_played_daily():
+    """Returns True if the current user has already played today's daily challenge."""
+    return get_daily_score() is not None
+
+
+# ============================================================================
+# LEADERBOARD
+# ============================================================================
+
+def get_leaderboard():
+    """Returns list of {name, best_score} for ALL profiles, sorted by best_score ascending."""
+    load_data()
+    entries = []
+    for name, data in profile_data.items():
+        best = data.get("best_score", 999)
+        entries.append({"name": name, "best_score": best})
+    entries.sort(key=lambda x: x["best_score"])
+    return entries
+
+def get_leaderboard_for_seed(seed):
+    """Returns list of {name, score} for all profiles that have a score for the given seed, sorted ascending."""
+    load_data()
+    entries = []
+    for name, data in profile_data.items():
+        score = data.get("daily_scores", {}).get(seed, None)
+        if score is not None:
+            entries.append({"name": name, "score": score})
+    entries.sort(key=lambda x: x["score"])
+    return entries
+
+
+# ============================================================================
+# SETTINGS
+# ============================================================================
+
+def get_setting(key, default=None):
+    """Get a setting value for the current user."""
+    if current_user and current_user in profile_data:
+        return profile_data[current_user].get("settings", {}).get(key, default)
+    return default
+
+def set_setting(key, value):
+    """Set a setting value for the current user and save."""
+    if current_user and current_user in profile_data:
+        if "settings" not in profile_data[current_user]:
+            profile_data[current_user]["settings"] = {}
+        profile_data[current_user]["settings"][key] = value
+        save_data()

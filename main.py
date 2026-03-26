@@ -39,15 +39,22 @@ import startScreen
 import profiles
 import os
 from time import sleep, time
-import tkinter as tk
-from tkinter import messagebox
 import sys
 import ui_style
-from ui_style import (Colors, Fonts, HUDCard, draw_ball_shadow, draw_ball_premium, 
+from ui_style import (Colors, Fonts, HUDCard, draw_ball_shadow, draw_ball_premium,
                       PremiumBackground, draw_shadow, draw_rounded_rect,
                       ParticleSystem, BallTrail, ParallaxBackground as ParallaxBG,
                       ScreenTransition, CameraShake, ScreenFlash, FlagAnimation, ConfettiSystem,
                       BallPhysicsEffect, AssetManager, Config, draw_ball_squash_stretch, PlatformRenderer)
+
+# ETAPA 5 - New feature modules
+from tutorial import Tutorial
+from achievements import AchievementManager
+from wind import WindSystem
+from replay import ReplaySystem
+from settings_screen import show_settings
+from level_editor import run_editor
+from multiplayer import MultiplayerManager
 
 # INITIALIZATION
 pygame.init()
@@ -78,6 +85,13 @@ camera_shake = CameraShake()
 screen_flash = ScreenFlash(winwidth, winheight)
 flag_anim = FlagAnimation()
 confetti = ConfettiSystem(max_particles=80)
+
+# ETAPA 5 - New feature systems
+tutorial = Tutorial(winwidth, winheight)
+achievement_mgr = AchievementManager()
+wind_system = WindSystem()
+replay_system = ReplaySystem()
+multiplayer_mgr = None  # Created when multiplayer mode selected
 
 # LOAD IMAGES
 icon = AssetManager.load_image(os.path.join('img', 'icon.ico'), (32, 32))
@@ -148,7 +162,6 @@ if Config.get('sfx_enabled', True):
     except Exception as e:
         print(f"[SOUND ERROR] Could not load audio: {e}")
         SOUND = False
-        SOUND = False
 
 # POWER UP VARS
 powerUps = 7
@@ -170,7 +183,7 @@ class scoreSheet():
     def __init__(self, parr):
         self.parList = parr
         self.par = sum(self.parList)
-        self.holes = 9
+        self.holes = len(self.parList)
         self.finalScore = None
         self.parScore = 0
         self.strokes = []
@@ -264,14 +277,25 @@ class scoreSheet():
 def error():
     if SOUND:
         wrong.play()
-    root = tk.Tk()
-    root.attributes("-topmost", True)
-    root.withdraw()
-    messagebox.showerror('Out of Powerups!', 'You have no more powerups remaining for this course, press ok to continue...')
-    try:
-        root.destroy()
-    except:
-        pass
+    # Show pygame overlay instead of tkinter dialog
+    overlay = pygame.Surface((winwidth, winheight), pygame.SRCALPHA)
+    overlay.fill((0, 0, 0, 160))
+    win.blit(overlay, (0, 0))
+    msg_font = AssetManager.get_font('Arial', 28, bold=True)
+    sub_font = AssetManager.get_font('Arial', 20, bold=False)
+    title_surf = msg_font.render("Out of Powerups!", True, (255, 80, 80))
+    sub_surf = sub_font.render("No more powerups remaining. Click to continue.", True, (220, 220, 220))
+    win.blit(title_surf, (winwidth // 2 - title_surf.get_width() // 2, winheight // 2 - 40))
+    win.blit(sub_surf, (winwidth // 2 - sub_surf.get_width() // 2, winheight // 2 + 10))
+    pygame.display.update()
+    waiting = True
+    while waiting:
+        for ev in pygame.event.get():
+            if ev.type in (pygame.MOUSEBUTTONDOWN, pygame.KEYDOWN):
+                waiting = False
+            if ev.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
 
 
 def showAudioSettings():
@@ -360,49 +384,32 @@ def endScreen(): # Display this screen when the user completes trhe course
     starting = True
     start = True
     
-    # RE-WRITE TEXT FILE Contaning Scores
-    oldscore = 'None'
-    oldcoins = 0
-    
-    # Read old scores
-    if os.path.exists('scores.txt'):
-        try:
-            file = open('scores.txt', 'r')
-            for line in file:
-                l = line.split()
-                if len(l) >= 2:
-                    if l[0] == 'score':
-                        oldscore = str(l[1]).strip()
-                    if l[0] == 'coins':
-                        oldcoins = str(l[1]).strip()
-            file.close()
-        except:
-            pass
+    # Save scores and coins to profiles
+    is_new_best = profiles.update_best_score(sheet.getScore())
+    profiles.set_coins(coins)
 
-    # Save new scores
-    is_new_best = False
-    try:
-        file = open('scores.txt', 'w')
-        if str(oldscore).lower() != 'none':
-            if sheet.getScore() < int(oldscore):
-                is_new_best = True
-                file.write('score ' + str(sheet.getScore()) + '\n')
-                profiles.update_best_score(sheet.getScore())
-            else:
-                file.write('score ' + str(oldscore) + '\n')
-        else:
-            is_new_best = True
-            file.write('score ' + str(sheet.getScore()) + '\n')
-            profiles.update_best_score(sheet.getScore())
-        
-        # Save coins (Syncing profiles and scores.txt)
-        # 'coins' is the total current wealth.
-        file.write('coins ' + str(coins) + '\n')
-        profiles.set_coins(coins)
-        
-        file.close()
-    except Exception as e:
-        print(f"Error saving scores: {e}")
+    # ETAPA 5 - Achievement checks
+    achievement_mgr.check_and_unlock('course_complete')
+    if sheet.getScore() < 0:
+        achievement_mgr.check_and_unlock('under_par')
+    if coins >= 10:
+        achievement_mgr.check_and_unlock('collector_10')
+    if coins >= 50:
+        achievement_mgr.check_and_unlock('collector_50')
+    # Check if all holes were par or better
+    all_good = all(s <= p for s, p in zip(sheet.strokes, sheet.parList) if s > 0)
+    if all_good and len(sheet.strokes) == len(sheet.parList):
+        achievement_mgr.check_and_unlock('perfect_hole')
+    # Check if no water hazard hit during course
+    if not hazard:
+        achievement_mgr.check_and_unlock('no_water')
+    # Check seed mode
+    if courses.current_seed:
+        achievement_mgr.check_and_unlock('seed_master')
+    # Check daily challenge
+    if courses.current_seed and courses.current_seed == profiles.get_daily_seed():
+        achievement_mgr.check_and_unlock('daily_player')
+        profiles.save_daily_score(sheet.getScore())
 
     # Celebration!
     confetti.emit(winwidth//2, winheight//2, count=150)
@@ -545,6 +552,9 @@ def endScreen(): # Display this screen when the user completes trhe course
 def setup(level):  # Setup objects for the level from module courses
     global line, par, hole, power, ballStationary, objects, ballColor, stickyPower, superPower, mullagain, start_coins, coins
     start_coins = coins
+    # ETAPA 5 - New wind per hole and clear replay
+    wind_system.randomize()
+    replay_system.clear()
     ballColor = (255,255,255)
     stickyPower = False
     superPower = False
@@ -634,6 +644,8 @@ def showScore():  # Display the score from class scoreSheet
 
 
 def holeInOne():  # If player gets a hole in one display special mesage to screen
+    # ETAPA 5 - Achievement
+    achievement_mgr.check_and_unlock('first_hole_in_one')
     # ETAPA 3 - Celebration effects!
     confetti.emit(winwidth // 2, winheight // 2, count=50)
     screen_flash.flash((255, 215, 0), intensity=100)  # Gold flash
@@ -720,6 +732,23 @@ def redrawWindow(ball, line, shoot=False, update=True):
     parallax_bg.draw(win)
     
     # ========================================
+    # ETAPA 5 - UPDATE MOVING OBSTACLES
+    # ========================================
+    for i in objects:
+        if i[4] == 'moving' and len(i) > 5:
+            data = i[5]
+            speed = data.get('speed', 2)
+            axis = data.get('axis', 'x')
+            move_range = data.get('range', 100)
+            if 'origin' not in data:
+                data['origin'] = i[0] if axis == 'x' else i[1]
+                data['dir'] = 1
+            idx = 0 if axis == 'x' else 1
+            i[idx] += speed * data['dir']
+            if abs(i[idx] - data['origin']) >= move_range:
+                data['dir'] *= -1
+
+    # ========================================
     # DRAW LEVEL OBJECTS
     # ========================================
     for i in objects:
@@ -768,6 +797,10 @@ def redrawWindow(ball, line, shoot=False, update=True):
         elif i[4] == 'sticky':
             for x in range(i[3]//64):
                 win.blit(sticky, (i[0], i[1] + (64 * x)))
+        elif i[4] == 'moving':
+            # ETAPA 5 - Moving platforms (rendered as floor with accent)
+            tex = PlatformRenderer.create_texture(i[2], max(i[3], 16), 'metal')
+            win.blit(tex, (i[0], i[1]))
         elif i[4] == 'coin':
             if i[5]:
                 img = coinImg()
@@ -859,9 +892,27 @@ def redrawWindow(ball, line, shoot=False, update=True):
     win.blit(left_text, (910, 62))
     
     # ========================================
+    # ETAPA 5 - WIND INDICATOR
+    # ========================================
+    wind_system.update()
+    wind_system.draw_indicator(win)
+    wind_system.draw_particles(win)
+
+    # ========================================
+    # ETAPA 5 - REPLAY GHOST BALL
+    # ========================================
+    replay_system.update()
+    replay_system.draw(win)
+
+    # ========================================
+    # ETAPA 5 - ACHIEVEMENT POPUPS
+    # ========================================
+    achievement_mgr.draw_popup(win)
+
+    # ========================================
     # CONTROLS HINT (bottom)
     # ========================================
-    controls_text = Fonts.UI_TINY.render('A: Audio | ESC: Quit | SPACE: Skip', True, Colors.TEXT_SECONDARY)
+    controls_text = Fonts.UI_TINY.render('A: Settings | R: Replay | ESC: Quit | SPACE: Skip', True, Colors.TEXT_SECONDARY)
     # Subtle background for readability
     hint_bg = pygame.Surface((controls_text.get_width() + 16, controls_text.get_height() + 8), pygame.SRCALPHA)
     draw_rounded_rect(hint_bg, (0, 0, 0, 25), (0, 0, controls_text.get_width() + 16, controls_text.get_height() + 8), 6)
@@ -1020,6 +1071,42 @@ def run_menu():
                     courses.set_seed(None) # Reset to normal
                     return 'play'
 
+                # ETAPA 5 - Daily Challenge
+                if startScreen.dailyClick(pos):
+                    daily_seed = profiles.get_daily_seed()
+                    if profiles.has_played_daily():
+                        # Show already played message
+                        overlay = pygame.Surface((winwidth, winheight), pygame.SRCALPHA)
+                        overlay.fill((0, 0, 0, 160))
+                        win.blit(overlay, (0, 0))
+                        msg = Fonts.UI_MEDIUM.render("Already played today's challenge!", True, Colors.ACCENT_GOLD)
+                        win.blit(msg, (winwidth // 2 - msg.get_width() // 2, winheight // 2 - 20))
+                        sub = Fonts.UI_SMALL.render("Come back tomorrow!", True, (200, 200, 200))
+                        win.blit(sub, (winwidth // 2 - sub.get_width() // 2, winheight // 2 + 20))
+                        pygame.display.update()
+                        pygame.time.delay(2000)
+                    else:
+                        courses.set_seed(daily_seed)
+                        level = 1
+                        return 'play'
+
+                # ETAPA 5 - Settings
+                if startScreen.settingsClick(pos):
+                    show_settings(win, Config)
+                    continue
+
+                # ETAPA 5 - Multiplayer
+                if startScreen.multiplayerClick(pos):
+                    return 'multiplayer'
+
+                # ETAPA 5 - Level Editor
+                if startScreen.editorClick(pos):
+                    return 'editor'
+
+                # ETAPA 5 - Achievements
+                if startScreen.achievementsClick(pos):
+                    return 'achievements'
+
                 if startScreen.shopClick(pos) == True:
                     print(f"[DEBUG] Shop Clicked at {pos}")
                     # Enter Shop Loop
@@ -1076,7 +1163,22 @@ def run_game():
     
     # Initial Draw
     redrawWindow(ballStationary, None, False, False)
-    
+
+    # ETAPA 5 - Show tutorial on first play
+    if not profiles.is_achievement_unlocked('tutorial_done'):
+        tutorial.reset()
+        while tutorial.is_active():
+            events = pygame.event.get()
+            for ev in events:
+                if ev.type == pygame.QUIT:
+                    return 'quit'
+            tutorial.update(events)
+            redrawWindow(ballStationary, None, False, False)
+            tutorial.draw(win)
+            pygame.display.update()
+            pygame.time.delay(16)
+        profiles.unlock_achievement('tutorial_done')
+
     running = True
     while running:
         # Sync Ball Color from Profile (ensure texture loaded)
@@ -1108,9 +1210,13 @@ def run_game():
                         displayScore(strokes, par)
                     strokes = 0
                     
-                if event.key == pygame.K_a:  # Audio settings
-                    showAudioSettings()
+                if event.key == pygame.K_a:  # Settings screen
+                    show_settings(win, Config)
                     redrawWindow(ballStationary, line)
+
+                if event.key == pygame.K_r:  # Replay last shot
+                    if not replay_system.is_replaying():
+                        replay_system.play_last_shot()
 
             if event.type == pygame.MOUSEMOTION:
                 pos = pygame.mouse.get_pos()
@@ -1193,6 +1299,8 @@ def run_game():
                                 if SOUND and not put: puttSound.play()
 
                                 shootPos = ballStationary
+                                # ETAPA 5 - Start recording for replay
+                                replay_system.start_recording(ballStationary)
                                 powerLock = True
                                 break
 
@@ -1256,6 +1364,10 @@ def run_game():
                 maxT = physics.maxTime(power, angle)
                 time += 0.085
                 ballCords = physics.ballPath(ballStationary[0], ballStationary[1], power, angle, time)
+                # ETAPA 5 - Apply wind
+                ballCords = wind_system.apply_wind(ballCords[0], ballCords[1], time)
+                # ETAPA 5 - Record for replay
+                replay_system.record_frame(ballCords[0], ballCords[1])
                 redrawWindow(ballCords, None, True)
 
                 if ballCords[1] > 650:
@@ -1414,6 +1526,7 @@ def run_game():
                          pygame.display.update()
                          ballStationary = ballCords
                          shoot = False
+                         replay_system.stop_recording()
                          time = 0
                          pos = pygame.mouse.get_pos()
                          angle = findAngle(pos)
@@ -1477,13 +1590,67 @@ def main():
         elif action == 'play':
             # 4. Game Phase
             game_action = run_game()
-            
+
             if game_action == 'menu':
-                # User pressed ESC, go back to top (Menu)
                 continue
             elif game_action == 'quit':
                 pygame.quit()
                 sys.exit()
+
+        elif action == 'multiplayer':
+            # ETAPA 5 - Multiplayer Mode
+            mp = MultiplayerManager()
+            mp.setup_players(win)
+            # Play through course with turns
+            num_holes = len(courses.getPar(1))
+            for hole_num in range(1, num_holes + 1):
+                for p_idx in range(len(mp.players)):
+                    mp.current_player_idx = p_idx
+                    level = hole_num
+                    game_action = run_game()
+                    mp.record_strokes(hole_num, strokes)
+                    if game_action == 'quit':
+                        pygame.quit()
+                        sys.exit()
+                if mp.is_course_complete():
+                    break
+            # Show final scoreboard
+            mp.draw_scoreboard(win)
+            pygame.display.update()
+            waiting = True
+            while waiting:
+                for ev in pygame.event.get():
+                    if ev.type in (pygame.MOUSEBUTTONDOWN, pygame.KEYDOWN):
+                        waiting = False
+                    if ev.type == pygame.QUIT:
+                        pygame.quit()
+                        sys.exit()
+
+        elif action == 'editor':
+            # ETAPA 5 - Level Editor
+            result = run_editor(win)
+            if result:
+                # Play the custom level
+                courses.set_seed(None)
+                # Temporarily set custom level data
+                level = 1
+                game_action = run_game()
+                if game_action == 'quit':
+                    pygame.quit()
+                    sys.exit()
+
+        elif action == 'achievements':
+            # ETAPA 5 - Show achievements screen
+            achievement_mgr.draw_list(win)
+            pygame.display.update()
+            waiting = True
+            while waiting:
+                for ev in pygame.event.get():
+                    if ev.type in (pygame.MOUSEBUTTONDOWN, pygame.KEYDOWN):
+                        waiting = False
+                    if ev.type == pygame.QUIT:
+                        pygame.quit()
+                        sys.exit()
 
 if __name__ == "__main__":
     main()

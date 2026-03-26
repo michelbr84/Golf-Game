@@ -198,29 +198,40 @@ Este documento rastreia o estado atual do jogo e todas as melhorias planejadas p
 
 ---
 
-## 🚀 Etapa 5 - Futuras Melhorias
+## ✅ Etapa 5 - Novas Features - CONCLUÍDA
 
-- [ ] Sistema de tutorial interativo
-- [ ] Modo multiplayer local (split-screen ou turnos)
-- [ ] Editor de níveis visual
-- [ ] Mais cursos (18+ buracos)
-- [ ] Sistema de conquistas/achievements
-- [ ] Obstáculos móveis (plataformas que se movem)
-- [ ] Sistema de vento (afeta trajetória da bola)
-- [ ] Leaderboard online
-- [ ] Tela de configurações (resolução, fullscreen, keybinds)
-- [ ] Melhorias na geração procedural (mais variedade de obstáculos)
-- [ ] Sistema de replay/ghost ball
-- [ ] Modo desafio diário (seed baseado na data)
+### ✅ Implementado
+
+#### 5.1 Novos Sistemas de Jogo
+- [x] Sistema de tutorial interativo (`tutorial.py`) — overlay com 6 passos guiados
+- [x] Sistema de vento (`wind.py`) — vento aleatório por buraco, indicador HUD, partículas visuais
+- [x] Sistema de replay/ghost ball (`replay.py`) — gravação e replay dos últimos 3 tiros (tecla R)
+- [x] Obstáculos móveis — plataformas que se movem no eixo X/Y com velocidade e range configuráveis
+
+#### 5.2 Modos de Jogo
+- [x] Modo multiplayer local (`multiplayer.py`) — 2-4 jogadores por turnos, placar final com ranking
+- [x] Modo desafio diário — seed automático baseado na data, salva pontuação diária por perfil
+- [x] 18 buracos (9 novos níveis adicionados em `courses.py`)
+
+#### 5.3 Ferramentas e UI
+- [x] Editor de níveis visual (`level_editor.py`) — canvas com grid, toolbar, save/load/test, Ctrl+Z
+- [x] Tela de configurações (`settings_screen.py`) — áudio, display, gameplay com toggles e sliders
+- [x] Sistema de conquistas/achievements (`achievements.py`) — 12 conquistas, popups animados, tela de troféus
+
+#### 5.4 Melhorias Técnicas
+- [x] Geração procedural melhorada (`level_generator.py`) — mais tipos de obstáculos, dificuldade progressiva, validação de path
+- [x] Leaderboard local — ranking de todos os perfis por melhor pontuação
+- [x] Persistência expandida (`profiles.py`) — daily scores, achievements, settings por perfil
 
 ---
 
-## ⚠️ Problemas Conhecidos
+## ✅ Problemas Corrigidos
 
-- Login usa tkinter (pode travar em alguns sistemas, especialmente Linux sem display)
-- `scores.txt` é legado — o sistema de persistência atual é `profiles.json`
-- `main_new_logic.py` é experimental e não utilizado na versão principal
-- Geração procedural pode criar níveis impossíveis em seeds específicas
+- [x] Login com fallback pygame quando tkinter não disponível
+- [x] `scores.txt` removido — persistência 100% via `profiles.json`
+- [x] `main_new_logic.py` removido (arquivo experimental)
+- [x] Geração procedural com validação de path (evita níveis impossíveis)
+- [x] Diálogos tkinter substituídos por overlays pygame em `main.py`
 
 ---
 
@@ -232,7 +243,7 @@ Este documento rastreia o estado atual do jogo e todas as melhorias planejadas p
 | ✅ Etapa 2 | **CONCLUÍDA** | Parallax, partículas, animações, squash & stretch |
 | ✅ Etapa 3 | **CONCLUÍDA** | Materiais procedurais, game feel, sistema de assets |
 | ✅ Etapa 4 | **CONCLUÍDA** | Login, persistência JSON, sistema de moedas, loja, seed mode |
-| 🚀 Etapa 5 | **PLANEJADA** | Futuras melhorias: multiplayer, conquistas, editor de níveis |
+| ✅ Etapa 5 | **CONCLUÍDA** | Tutorial, multiplayer, editor, conquistas, vento, replay, 18 buracos |
 
 ---
 
