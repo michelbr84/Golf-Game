@@ -99,9 +99,7 @@ Este documento rastreia o estado atual do jogo e todas as melhorias planejadas p
 
 ---
 
-## 🚧 Próximas Etapas
-
-## 🔄 Etapa 2 - "Premium" (Polish Visual) - EM PROGRESSO
+## ✅ ETAPA 2 CONCLUÍDA - "Premium" (Polish Visual)
 
 ### ✅ Implementado
 
@@ -115,8 +113,6 @@ Este documento rastreia o estado atual do jogo e todas as melhorias planejadas p
 - [x] Splash na água (gotas azuis)
 - [x] Sparkle ao coletar moeda (dourado)
 - [x] Trail da bola em movimento (`BallTrail`)
-
-### ⏳ Pendente
 
 #### 2.3 Bola Premium (Avançado)
 - [x] Trail/rastro quando acelera
@@ -152,6 +148,40 @@ Este documento rastreia o estado atual do jogo e todas as melhorias planejadas p
 
 ---
 
+## ✅ Etapa 4 - Sistema de Login e Persistência - CONCLUÍDA
+
+### ✅ Implementado
+
+#### 4.1 Sistema de Autenticação
+- [x] Tela de login via tkinter (input de username)
+- [x] Suporte a múltiplos perfis no mesmo dispositivo
+- [x] Botão de logout na tela inicial (canto superior direito)
+- [x] Criação automática de perfil novo ao primeiro login
+
+#### 4.2 Persistência de Dados (`profiles.py`)
+- [x] Dados salvos em `profiles.json` (formato JSON)
+- [x] Migração automática de campos ausentes em perfis antigos
+- [x] Persistência de moedas, melhor pontuação e bolas desbloqueadas
+- [x] Persistência da bola equipada entre sessões
+
+#### 4.3 Sistema de Moedas
+- [x] Moedas coletáveis em campo durante o jogo
+- [x] Saldo de moedas persistido por perfil
+- [x] Funções `get_coins()`, `add_coins()`, `set_coins()` centralizadas
+
+#### 4.4 Fluxo de Compra e Equipamento na Loja
+- [x] Compra de bola deduz moedas e desbloqueia permanentemente
+- [x] Equipar bola selecionada persiste entre sessões
+- [x] Indicadores visuais de estado: bloqueada 🔒, equipada ✓, disponível
+
+#### 4.5 Modo Seed (Geração Procedural)
+- [x] Botão "SEED MODE" na tela inicial
+- [x] Input de seed via diálogo tkinter
+- [x] `LevelGenerator` usa `random.seed(str(seed))` para reproducibilidade
+- [x] Seed pode ser qualquer string ou número
+
+---
+
 ## 🔧 Melhorias Técnicas - CONCLUÍDA
 
 ### Refatoração
@@ -168,6 +198,32 @@ Este documento rastreia o estado atual do jogo e todas as melhorias planejadas p
 
 ---
 
+## 🚀 Etapa 5 - Futuras Melhorias
+
+- [ ] Sistema de tutorial interativo
+- [ ] Modo multiplayer local (split-screen ou turnos)
+- [ ] Editor de níveis visual
+- [ ] Mais cursos (18+ buracos)
+- [ ] Sistema de conquistas/achievements
+- [ ] Obstáculos móveis (plataformas que se movem)
+- [ ] Sistema de vento (afeta trajetória da bola)
+- [ ] Leaderboard online
+- [ ] Tela de configurações (resolução, fullscreen, keybinds)
+- [ ] Melhorias na geração procedural (mais variedade de obstáculos)
+- [ ] Sistema de replay/ghost ball
+- [ ] Modo desafio diário (seed baseado na data)
+
+---
+
+## ⚠️ Problemas Conhecidos
+
+- Login usa tkinter (pode travar em alguns sistemas, especialmente Linux sem display)
+- `scores.txt` é legado — o sistema de persistência atual é `profiles.json`
+- `main_new_logic.py` é experimental e não utilizado na versão principal
+- Geração procedural pode criar níveis impossíveis em seeds específicas
+
+---
+
 ## 📊 Progresso
 
 | Etapa | Status | Descrição |
@@ -175,6 +231,8 @@ Este documento rastreia o estado atual do jogo e todas as melhorias planejadas p
 | ✅ Etapa 1 | **CONCLUÍDA** | Base visual premium (fontes, glass, sombras, gradientes) |
 | ✅ Etapa 2 | **CONCLUÍDA** | Parallax, partículas, animações, squash & stretch |
 | ✅ Etapa 3 | **CONCLUÍDA** | Materiais procedurais, game feel, sistema de assets |
+| ✅ Etapa 4 | **CONCLUÍDA** | Login, persistência JSON, sistema de moedas, loja, seed mode |
+| 🚀 Etapa 5 | **PLANEJADA** | Futuras melhorias: multiplayer, conquistas, editor de níveis |
 
 ---
 
@@ -200,4 +258,4 @@ Este documento rastreia o estado atual do jogo e todas as melhorias planejadas p
 
 ---
 
-*Última atualização: Janeiro 2026*
+*Última atualização: Março 2026*

@@ -9,16 +9,24 @@ Este documento descreve a estrutura completa de pastas e arquivos do jogo, inclu
 ```
 Golf-Game/
 │
-├── 📄 main.py                    # Arquivo principal do jogo (1217 linhas)
+├── 📄 main.py                    # Arquivo principal do jogo (1490 linhas)
+├── 📄 main_new_logic.py          # Versão experimental com nova lógica
 ├── 📄 physics.py                 # Sistema de física e cálculos de trajetória
 ├── 📄 courses.py                 # Definição dos 9 níveis/buracos
-├── 📄 startScreen.py             # Tela inicial, menu e loja
+├── 📄 startScreen.py             # Tela inicial, menu, login e loja
+├── 📄 ui_style.py                # Sistema de UI premium (cores, fontes, partículas, efeitos)
+├── 📄 profiles.py                # Persistência de perfis de jogador (JSON)
+├── 📄 level_generator.py         # Geração procedural de níveis a partir de seed
 ├── 📄 get_pip.py                 # Script para instalação automática de pip
 │
 ├── 📄 scores.txt                 # Salvamento de pontuações e moedas
+├── 📄 profiles.json              # Dados persistidos dos perfis de jogadores
 ├── 📄 README.md                  # Documentação principal
 ├── 📄 ToDo.md                    # Tracker de features e melhorias
 ├── 📄 structure.md               # Este arquivo
+├── 📄 CLAUDE.md                  # Instruções para o assistente de IA
+│
+├── 📁 .claude/                   # Configurações do Claude Code
 │
 ├── 📄 .gitpod.dockerfile         # Configuração Docker para Gitpod
 ├── 📄 .gitpod.yml                # Configuração do workspace Gitpod
@@ -37,7 +45,7 @@ Golf-Game/
 
 ## 📜 Arquivos Python
 
-### `main.py` (49.2 KB - 1217 linhas)
+### `main.py` (60 KB - ~1490 linhas)
 Arquivo principal contendo:
 - Loop principal do jogo
 - Sistema de renderização (redrawWindow)
@@ -62,12 +70,33 @@ Definição dos níveis:
 - Sistema de moedas por nível
 - Valores de par por buraco
 
-### `startScreen.py` (8.9 KB)
-Tela inicial e sistema de loja:
+### `startScreen.py` (16 KB)
+Tela inicial, login e sistema de loja:
 - Classe `ball` - representação de bolas na loja
-- Função `mainScreen()` - renderiza menu principal
+- Função `mainScreen()` - renderiza menu principal com login
 - Função `drawShop()` - renderiza interface da loja
 - Sistema de compra e equipamento
+- Interface de login com seleção de perfil
+
+### `ui_style.py` (52 KB - ~1300 linhas)
+Sistema de UI premium contendo:
+- Paletas de cores e sistema de temas
+- Fontes e tipografia premium
+- Sistema de partículas (ParticleSystem)
+- Efeitos visuais (glassmorphism, gradientes, sombras)
+- Asset Manager centralizado para carregamento de recursos
+
+### `profiles.py` (4.2 KB)
+Persistência de perfis de jogador:
+- Leitura e escrita de perfis em JSON
+- Gerenciamento de moedas e progresso por jogador
+- Sistema de login/logout
+
+### `level_generator.py` (4.6 KB)
+Geração procedural de níveis:
+- Criação de cursos a partir de um seed numérico
+- Geração determinística (mesmo seed = mesmo nível)
+- Variação infinita de layouts
 
 ### `get_pip.py` (1.7 MB)
 Script standalone para instalação do pip caso não esteja disponível.
@@ -81,8 +110,12 @@ Script standalone para instalação do pip caso não esteja disponível.
 | Arquivo | Tamanho | Descrição |
 |---------|---------|-----------|
 | `back.png` | 205 KB | Fundo principal do jogo (céu + montanhas + vegetação) |
+| `back2.png` | — | Fundo alternativo do jogo |
 | `course1.png` | 229 KB | Thumbnail do curso para menu de seleção |
+| `course12.png` | — | Thumbnail de curso adicional |
 | `title.png` | 57 KB | Logo "Super Minigolf" para tela inicial |
+| `title2.png` | — | Variante do logo do título |
+| `game.png` | — | Screenshot do gameplay para README |
 
 ### Elementos de Gameplay
 
@@ -122,12 +155,6 @@ Script standalone para instalação do pip caso não esteja disponível.
 |---------|---------|-----------|
 | `icon.png` | 3.3 KB | Ícone do jogo (PNG) |
 | `icon.ico` | 90 KB | Ícone do jogo (Windows ICO) |
-
-### Sistema
-
-| Arquivo | Tamanho | Descrição |
-|---------|---------|-----------|
-| `Thumbs.db` | 209 KB | Cache de miniaturas do Windows (pode ser ignorado) |
 
 ---
 
@@ -182,10 +209,11 @@ Dockerfile personalizado para o ambiente Gitpod.
 
 | Categoria | Quantidade | Tamanho Total |
 |-----------|------------|---------------|
-| Imagens | 22 arquivos | ~625 KB |
+| Imagens | 26 arquivos | ~625 KB |
 | Áudio | 5 arquivos | ~6.7 MB |
-| Python | 4 arquivos | ~60 KB |
-| **Total** | **31 arquivos** | **~7.4 MB** |
+| Python | 8 arquivos | ~120 KB |
+| Dados/Config | 3 arquivos | ~20 KB |
+| **Total** | **42 arquivos** | **~7.5 MB** |
 
 ---
 
@@ -207,4 +235,4 @@ Dockerfile personalizado para o ambiente Gitpod.
 
 ---
 
-*Última atualização: Janeiro 2026*
+*Última atualização: Março 2026*

@@ -57,6 +57,16 @@ Um jogo de golf 2D completo desenvolvido em Python com Pygame, apresentando fís
 - ✅ Limite de 3 power-ups por rodada
 - ✅ Feedback visual de power-up ativo
 
+### 👤 Sistema de Login e Perfis
+- ✅ Login com nome de jogador
+- ✅ Persistência de progresso por perfil
+- ✅ Sistema de moedas persistente por jogador
+
+### 🎲 Modo Seed
+- ✅ Geração procedural de níveis
+- ✅ Seed determinístico (mesmo seed = mesmo nível)
+- ✅ Infinitas variações de cursos
+
 ### 🛒 Sistema de Loja
 - ✅ 16 cores diferentes de bolas
 - ✅ Sistema de moedas como currency
@@ -116,7 +126,11 @@ Golf-Game/
 ├── courses.py           # Definição dos 9 níveis
 ├── startScreen.py       # Tela inicial e loja
 ├── ui_style.py          # Sistema de UI premium (cores, fontes, componentes)
+├── profiles.py          # Persistência de perfis de jogador (JSON)
+├── level_generator.py   # Geração procedural de níveis (modo seed)
 ├── scores.txt           # Salvamento de progresso
+├── profiles.json        # Dados dos perfis de jogadores
+├── CLAUDE.md            # Instruções para o assistente de IA
 ├── ToDo.md              # Tracker de features e melhorias
 ├── README.md            # Este arquivo
 ├── img/                 # Sprites e imagens
@@ -148,6 +162,7 @@ Golf-Game/
 | Power-ups | 3 tipos |
 | Efeitos sonoros | 5+ |
 | Obstáculos | 4 tipos |
+| Perfis de jogador | Ilimitados |
 
 ---
 
@@ -188,11 +203,16 @@ O projeto está passando por uma grande atualização visual e de UX. Consulte o
 - [x] Correção de bugs de fechamento (sys.exit)
 - [x] Animação contínua na tela de vitória
 
+### ✅ Etapa 5 - Login, Perfis & Modo Seed (CONCLUÍDA)
+- [x] Sistema de login/logout de jogador
+- [x] Persistência de perfis (JSON)
+- [x] Sistema de moedas com persistência por perfil
+- [x] Modo seed (geração procedural de níveis)
+
 ## 🔧 Melhorias Técnicas
 - [x] Asset Manager centralizado para carregamento eficiente
 - [x] Sistema de Configurações (Config) para preferências
 - [x] Otimização de renderização com cache de texturas
-- [x] Modo Seed (Geração Procedural de Níveis) 🎲
 
 ### Funcionalidades Futuras
 - [ ] Sistema de tutorial
@@ -221,4 +241,5 @@ Este projeto está sob a licença MIT. Veja o arquivo LICENSE para mais detalhes
 **Divirta-se jogando Super Minigolf!** 🏌️⛳
 
 *Desenvolvido com ❤️ em Python + Pygame*
-# Golf-Game
+
+*Última atualização: Março 2026*
