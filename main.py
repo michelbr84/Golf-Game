@@ -120,7 +120,7 @@ time = 0
 rollVel = 0
 strokes = 0
 par = 0
-level = 8
+level = 1
 flagx = 0
 coins = 0
 shootPos = ()
@@ -1060,40 +1060,10 @@ def run_menu():
                     print(f"[DEBUG] Logout Clicked at {pos}")
                     return 'logout'
 
-                # Check Seed Mode
-                seed = startScreen.seedClick(pos)
-                if seed:
-                    courses.set_seed(seed)
-                    level = 1
-                    return 'play'
-                    
-                if startScreen.click(pos) != None:
-                    courses.set_seed(None) # Reset to normal
-                    return 'play'
-
-                # ETAPA 5 - Daily Challenge
-                if startScreen.dailyClick(pos):
-                    daily_seed = profiles.get_daily_seed()
-                    if profiles.has_played_daily():
-                        # Show already played message
-                        overlay = pygame.Surface((winwidth, winheight), pygame.SRCALPHA)
-                        overlay.fill((0, 0, 0, 160))
-                        win.blit(overlay, (0, 0))
-                        msg = Fonts.UI_MEDIUM.render("Already played today's challenge!", True, Colors.ACCENT_GOLD)
-                        win.blit(msg, (winwidth // 2 - msg.get_width() // 2, winheight // 2 - 20))
-                        sub = Fonts.UI_SMALL.render("Come back tomorrow!", True, (200, 200, 200))
-                        win.blit(sub, (winwidth // 2 - sub.get_width() // 2, winheight // 2 + 20))
-                        pygame.display.update()
-                        pygame.time.delay(2000)
-                    else:
-                        courses.set_seed(daily_seed)
-                        level = 1
-                        return 'play'
-
-                # ETAPA 5 - Settings
+                # ETAPA 5 - Settings (check first, bottom row)
                 if startScreen.settingsClick(pos):
                     show_settings(win, Config)
-                    continue
+                    break
 
                 # ETAPA 5 - Multiplayer
                 if startScreen.multiplayerClick(pos):
@@ -1107,6 +1077,38 @@ def run_menu():
                 if startScreen.achievementsClick(pos):
                     return 'achievements'
 
+                # ETAPA 5 - Daily Challenge
+                if startScreen.dailyClick(pos):
+                    daily_seed = profiles.get_daily_seed()
+                    if profiles.has_played_daily():
+                        overlay = pygame.Surface((winwidth, winheight), pygame.SRCALPHA)
+                        overlay.fill((0, 0, 0, 160))
+                        win.blit(overlay, (0, 0))
+                        msg = Fonts.UI_MEDIUM.render("Already played today's challenge!", True, Colors.ACCENT_GOLD)
+                        win.blit(msg, (winwidth // 2 - msg.get_width() // 2, winheight // 2 - 20))
+                        sub = Fonts.UI_SMALL.render("Come back tomorrow!", True, (200, 200, 200))
+                        win.blit(sub, (winwidth // 2 - sub.get_width() // 2, winheight // 2 + 20))
+                        pygame.display.update()
+                        pygame.time.delay(2000)
+                    else:
+                        courses.set_seed(daily_seed)
+                        level = 1
+                        return 'play'
+                    break
+
+                # Check Seed Mode
+                seed = startScreen.seedClick(pos)
+                if seed:
+                    courses.set_seed(seed)
+                    level = 1
+                    return 'play'
+
+                # Check Course card (play)
+                if startScreen.click(pos) != None:
+                    courses.set_seed(None)
+                    return 'play'
+
+                # Check Shop
                 if startScreen.shopClick(pos) == True:
                     print(f"[DEBUG] Shop Clicked at {pos}")
                     # Enter Shop Loop
@@ -1601,18 +1603,23 @@ def main():
             # ETAPA 5 - Multiplayer Mode
             mp = MultiplayerManager()
             mp.setup_players(win)
-            # Play through course with turns
+            # Play through course with turns — each player plays each hole
             num_holes = len(courses.getPar(1))
             for hole_num in range(1, num_holes + 1):
                 for p_idx in range(len(mp.players)):
-                    mp.current_player_idx = p_idx
+                    mp.current_index = p_idx
+                    player = mp.get_current_player()
+                    if player:
+                        ballColor = player['color']
                     level = hole_num
                     game_action = run_game()
-                    mp.record_strokes(hole_num, strokes)
                     if game_action == 'quit':
                         pygame.quit()
                         sys.exit()
-                if mp.is_course_complete():
+                    mp.record_strokes(hole_num, strokes)
+                    if game_action == 'menu':
+                        break
+                if game_action == 'menu':
                     break
             # Show final scoreboard
             mp.draw_scoreboard(win)
@@ -1629,15 +1636,7 @@ def main():
         elif action == 'editor':
             # ETAPA 5 - Level Editor
             result = run_editor(win)
-            if result:
-                # Play the custom level
-                courses.set_seed(None)
-                # Temporarily set custom level data
-                level = 1
-                game_action = run_game()
-                if game_action == 'quit':
-                    pygame.quit()
-                    sys.exit()
+            # Editor returns None on ESC, just go back to menu
 
         elif action == 'achievements':
             # ETAPA 5 - Show achievements screen

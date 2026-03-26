@@ -102,6 +102,16 @@ class Tutorial:
         self._active = False
         self._complete = True
 
+    def reset(self):
+        """Reset tutorial to the beginning so it can be shown again."""
+        self._step_index = 0
+        self._active = True
+        self._complete = False
+        self._mouse_moved = False
+        self._anim_tick = 0.0
+        self._fade_alpha = 0
+        self._fading_in = True
+
     def update(self, events):
         """
         Process events and advance tutorial steps as appropriate.

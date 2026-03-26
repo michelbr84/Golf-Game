@@ -39,9 +39,6 @@ class MultiplayerManager:
         Pygame screen where each player enters name and picks ball colour.
         Blocks until all players are configured. Updates self.players in place.
         """
-        pygame.init()
-        Fonts.init()
-
         clock = pygame.time.Clock()
         win_w, win_h = win.get_size()
 
@@ -299,7 +296,6 @@ class MultiplayerManager:
 
     def draw_scoreboard(self, surface):
         """Draw full multiplayer scoreboard (end of course)."""
-        Fonts.init()
         sw, sh = surface.get_width(), surface.get_height()
 
         # Dim background
